@@ -101,3 +101,7 @@ liters  = round(fillRatio * bagSizeLiters, 1)
 - Items marked **[제안] / [Proposed]** are implementation suggestions, not commitments: follow them by default, but raise it if the code makes a better option obvious.
 - Prefer small, reviewable changes: one screen or one lib module at a time.
 - Don't add dependencies for things Expo already covers, and don't upgrade the Expo SDK as a side effect of another task.
+
+### Known token gap
+
+`BottomNavigation`'s Figma `Glass_Button` effect has a drop-shadow (`0px 0px 10px 0px #0000001a`) that isn't in `design-tokens/tokens.json` — none of `Shadow_Strong/Emphasize/Normal` match it. `src/components/BottomNavigation.tsx` currently approximates it with `shadows.normal[1]` (product decision, 2026-09-28). If this shadow gets added to Figma/Tokens Studio as its own token, re-export `tokens.json`, regenerate, and switch `BottomNavigation` to the real token.

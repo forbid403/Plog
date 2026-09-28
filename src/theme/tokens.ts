@@ -108,19 +108,19 @@ export const colors = {
     "950": "#2b0202"
   },
   "opacity": {
-    "Black_8": "#00000014",
-    "Black_12": "#0000001f",
-    "Black_50": "#00000080",
-    "Grey_8": "#6e6e6e14",
-    "Grey_12": "#6e6e6e1f",
-    "Grey_50": "#6e6e6e80",
-    "White_8": "#ffffff14",
-    "White_12": "#ffffff1f",
-    "White_50": "#ffffff80"
+    "black8": "#00000014",
+    "black12": "#0000001f",
+    "black50": "#00000080",
+    "grey8": "#6e6e6e14",
+    "grey12": "#6e6e6e1f",
+    "grey50": "#6e6e6e80",
+    "white8": "#ffffff14",
+    "white12": "#ffffff1f",
+    "white50": "#ffffff80"
   },
   "base": {
-    "White": "#ffffff",
-    "Black": "#000000"
+    "white": "#ffffff",
+    "black": "#000000"
   },
   "brand": {
     "primary": {

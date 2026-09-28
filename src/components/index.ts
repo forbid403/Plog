@@ -1,4 +1,10 @@
 export { default as IconButton } from './IconButton';
 export type { IconButtonProps, IconButtonRenderIconProps } from './IconButton';
+export { default as BottomNavigation } from './BottomNavigation';
+export type { BottomNavigationProps, BottomNavigationTab } from './BottomNavigation';
 export { default as HouseIcon } from './icons/HouseIcon';
 export type { HouseIconProps } from './icons/HouseIcon';
+export { default as SneakerMoveIcon } from './icons/SneakerMoveIcon';
+export type { SneakerMoveIconProps } from './icons/SneakerMoveIcon';
+export { default as UserIcon } from './icons/UserIcon';
+export type { UserIconProps } from './icons/UserIcon';

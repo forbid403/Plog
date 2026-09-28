@@ -72,7 +72,7 @@ def build_colors(primitives: dict) -> dict:
         node = colors
         for seg in path[1:-1]:
             node = node.setdefault(camel(seg), {})
-        node[path[-1]] = value
+        node[camel(path[-1])] = value
     return colors
 
 
