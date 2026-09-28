@@ -53,13 +53,22 @@ liters  = round(fillRatio * bagSizeLiters, 1)
 - **Minimum session (C4):** under 1 minute or under 0.1 km cannot be saved.
 - **0 L sessions are real sessions:** they appear in the feed, get an Impact card with the litter value left empty, and can be shared.
 
+## Design tokens
+
+`design-tokens/tokens.json` is the design system — synced from Figma via Tokens Studio (DTCG format). **It is the only source of colour, spacing, shadow and typography values.** No exceptions:
+
+- Never hard-code a hex colour, px/dp spacing number, font size, weight, or shadow in component code. If a value isn't in `design-tokens/tokens.json`, it doesn't exist yet — flag it and ask, don't invent or approximate one.
+- `src/theme/` (once scaffolded) must be generated or hand-mapped **from** `design-tokens/tokens.json` — same names, same values, no drift. If they disagree, `design-tokens/tokens.json` wins; fix `src/theme/` to match.
+- When `design-tokens/tokens.json` changes (re-exported from Tokens Studio), regenerate/update `src/theme/` in the same change — don't let them go stale relative to each other.
+- Token groups: `Color.*` (GreyScale, Pink, Purple, Blue, Green, Yellow, Orange, Red, Opacity, Base, Brand.Primary/Secondary), `Number Scale.2's.*` (spacing/sizing, 2–999), `Shadow_Strong/Emphasize/Normal`, and typography composites (`Headline`, `Caption`, `Titles.*`, `Body.*`, `Label.*`) which already bundle font family/weight/size/line-height — use the composite, don't reassemble it from primitives.
+
 ## Conventions
 
 - TypeScript strict; no `any` in committed code.
 - Files: components `PascalCase.tsx`, hooks `useThing.ts`, utilities `kebab-case.ts`.
 - Keep formatters, conversions and calculations in `src/lib/`, pure and unit-tested. UI components render values, they don't compute them.
 - API calls go through `src/api/`; no `fetch` inside components.
-- Reuse the tokens in `src/theme/` rather than hard-coding colours or spacing.
+- Reuse the tokens in `src/theme/` rather than hard-coding colours or spacing — see **Design tokens** above for where those values come from.
 - User-facing copy is English, taken verbatim from the spec (`Finding GPS…`, `This session is too short to save.`, …). Don't invent alternative wording — if a string is missing from the spec, flag it.
 
 ## Testing
