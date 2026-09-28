@@ -1,0 +1,305 @@
+/**
+ * GENERATED FILE — do not edit by hand.
+ * Source: design-tokens/tokens.json
+ * Regenerate: python3 design-tokens/build-css.py
+ */
+
+:root {
+  --color-base-black: #000000;
+  --color-base-white: #ffffff;
+  --color-blue-100: #e1fcff;
+  --color-blue-200: #c1f7fc;
+  --color-blue-300: #99f3fc;
+  --color-blue-400: #76f1f9;
+  --color-blue-50: #f6fdfe;
+  --color-blue-500: #32ebf4;
+  --color-blue-600: #2db9c1;
+  --color-blue-700: #1b868b;
+  --color-blue-800: #0e585c;
+  --color-blue-900: #042f33;
+  --color-blue-950: #011d1e;
+  --color-brand-primary-100: #d4fdd8;
+  --color-brand-primary-200: #9dfca8;
+  --color-brand-primary-300: #54fc78;
+  --color-brand-primary-400: #24f15b;
+  --color-brand-primary-50: #eaffed;
+  --color-brand-primary-500: #15e654;
+  --color-brand-primary-600: #14b440;
+  --color-brand-primary-700: #0b862d;
+  --color-brand-primary-800: #06571b;
+  --color-brand-primary-900: #012f0a;
+  --color-brand-primary-950: #001e04;
+  --color-brand-secondary-100: #fff7d2;
+  --color-brand-secondary-200: #ffef97;
+  --color-brand-secondary-300: #ffe600;
+  --color-brand-secondary-400: #fce000;
+  --color-brand-secondary-50: #fffcf1;
+  --color-brand-secondary-500: #f3d700;
+  --color-brand-secondary-600: #bda900;
+  --color-brand-secondary-700: #8a7a00;
+  --color-brand-secondary-800: #5b5100;
+  --color-brand-secondary-900: #302a00;
+  --color-brand-secondary-950: #1c1a00;
+  --color-green-100: #dbffa7;
+  --color-green-200: #befe00;
+  --color-green-300: #b3f200;
+  --color-green-400: #aee900;
+  --color-green-50: #effeda;
+  --color-green-500: #a4dd00;
+  --color-green-600: #81ad00;
+  --color-green-700: #5d7e00;
+  --color-green-800: #3d5600;
+  --color-green-900: #1e2b00;
+  --color-green-950: #101a00;
+  --color-grey-scale-100: #eef0ef;
+  --color-grey-scale-200: #dee1e0;
+  --color-grey-scale-300: #cfd3d1;
+  --color-grey-scale-400: #c1c5c3;
+  --color-grey-scale-50: #f7f8f7;
+  --color-grey-scale-500: #b1b5b3;
+  --color-grey-scale-600: #8d908e;
+  --color-grey-scale-700: #696b69;
+  --color-grey-scale-800: #444645;
+  --color-grey-scale-900: #262727;
+  --color-grey-scale-950: #151613;
+  --color-opacity-black-12: #0000001f;
+  --color-opacity-black-50: #00000080;
+  --color-opacity-black-8: #00000014;
+  --color-opacity-grey-12: #6e6e6e1f;
+  --color-opacity-grey-50: #6e6e6e80;
+  --color-opacity-grey-8: #6e6e6e14;
+  --color-opacity-white-12: #ffffff1f;
+  --color-opacity-white-50: #ffffff80;
+  --color-opacity-white-8: #ffffff14;
+  --color-orange-100: #ffe9e3;
+  --color-orange-200: #ffcec1;
+  --color-orange-300: #ffb7a1;
+  --color-orange-400: #ff9973;
+  --color-orange-50: #fff5f3;
+  --color-orange-500: #ff7d30;
+  --color-orange-600: #db5b00;
+  --color-orange-700: #a74500;
+  --color-orange-800: #712c00;
+  --color-orange-900: #451600;
+  --color-orange-950: #2c0b00;
+  --color-pink-100: #ffe0eb;
+  --color-pink-200: #ffbcd6;
+  --color-pink-300: #ff97c4;
+  --color-pink-400: #ff6fb4;
+  --color-pink-50: #fff0f5;
+  --color-pink-500: #ff2fa3;
+  --color-pink-600: #e20084;
+  --color-pink-700: #aa0063;
+  --color-pink-800: #750042;
+  --color-pink-900: #490027;
+  --color-pink-950: #310019;
+  --color-purple-100: #ebe5ff;
+  --color-purple-200: #dbcfff;
+  --color-purple-300: #c9b3ff;
+  --color-purple-400: #b898ff;
+  --color-purple-50: #f7f2ff;
+  --color-purple-500: #ab7eff;
+  --color-purple-600: #9448ff;
+  --color-purple-700: #7c00f0;
+  --color-purple-800: #5600ac;
+  --color-purple-900: #300064;
+  --color-purple-950: #200046;
+  --color-red-100: #fcdbdb;
+  --color-red-200: #f9b1b1;
+  --color-red-300: #f78989;
+  --color-red-400: #f55757;
+  --color-red-50: #fdeded;
+  --color-red-500: #e02626;
+  --color-red-600: #b41c1c;
+  --color-red-700: #891313;
+  --color-red-800: #600a0a;
+  --color-red-900: #3e0404;
+  --color-red-950: #2b0202;
+  --color-yellow-100: #fff6e4;
+  --color-yellow-200: #ffebc7;
+  --color-yellow-300: #ffe1a6;
+  --color-yellow-400: #ffd362;
+  --color-yellow-50: #fff8ee;
+  --color-yellow-500: #ffc900;
+  --color-yellow-600: #d19c00;
+  --color-yellow-700: #9c7400;
+  --color-yellow-800: #684c00;
+  --color-yellow-900: #392700;
+  --color-yellow-950: #221500;
+  --spacing-2-xl: 24px;
+  --spacing-2-xs: 4px;
+  --spacing-3-xl: 32px;
+  --spacing-3-xs: 2px;
+  --spacing-4-xl: 40px;
+  --spacing-full: 999px;
+  --spacing-l: 16px;
+  --spacing-m: 12px;
+  --spacing-s: 8px;
+  --spacing-xl: 20px;
+  --spacing-xs: 6px;
+  --font-family-sf-pro: "SF Pro";
+  --font-size-0: 13px;
+  --font-size-1: 15px;
+  --font-size-2: 17px;
+  --font-size-3: 22px;
+  --font-size-4: 28px;
+  --font-size-5: 34px;
+  --font-weights-sf-pro-0: 600;
+  --font-weights-sf-pro-1: 400;
+  --font-weights-sf-pro-2: 700;
+  --font-weights-sf-pro-3: 500;
+  --letter-spacing-0: normal;
+  --line-heights-0: normal;
+  --line-heights-1: normal;
+  --line-heights-10: normal;
+  --line-heights-11: normal;
+  --line-heights-12: normal;
+  --line-heights-2: 120%;
+  --line-heights-3: 120%;
+  --line-heights-4: 120%;
+  --line-heights-5: normal;
+  --line-heights-6: normal;
+  --line-heights-7: normal;
+  --line-heights-8: normal;
+  --line-heights-9: normal;
+  --paragraph-indent-0: 0px;
+  --paragraph-spacing-0: 0;
+  --text-case-none: none;
+  --text-decoration-none: none;
+
+  --shadow-emphasize: 0px 1px 4px 0px #0000001f, 0px 0px 1px 0px #00000014, 0px 1px 8px 0px #0000001f;
+  --shadow-normal: 0px 0px 1px 0px #00000014, 0px 1px 2px 0px #0000001f, 0px 0px 1px 0px #00000014;
+  --shadow-strong: 0px 0px 4px 0px #00000014, 0px 4px 8px 0px #00000014, 0px 6px 12px 0px #0000001f;
+}
+
+/* Typography — matches the composite tokens in tokens.json 1:1 */
+
+.text-body-base {
+  font-family: "SF Pro";
+  font-weight: 400;
+  font-size: 17px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-body-base-bold {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 17px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-body-extra-small {
+  font-family: "SF Pro";
+  font-weight: 400;
+  font-size: 13px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-body-extra-small-bold {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 13px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-body-small {
+  font-family: "SF Pro";
+  font-weight: 400;
+  font-size: 15px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-body-small-bold {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 15px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-caption {
+  font-family: "SF Pro";
+  font-weight: 400;
+  font-size: 13px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-headline {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 17px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-label-default {
+  font-family: "SF Pro";
+  font-weight: 500;
+  font-size: 15px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-label-large {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 17px;
+  line-height: normal;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-titles-display {
+  font-family: "SF Pro";
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 120%;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-titles-large {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 120%;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}
+
+.text-titles-medium {
+  font-family: "SF Pro";
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 120%;
+  letter-spacing: normal;
+  text-transform: none;
+  text-decoration: none;
+}

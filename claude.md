@@ -62,6 +62,14 @@ liters  = round(fillRatio * bagSizeLiters, 1)
 - When `design-tokens/tokens.json` changes (re-exported from Tokens Studio), regenerate/update `src/theme/` in the same change — don't let them go stale relative to each other.
 - Token groups: `Color.*` (GreyScale, Pink, Purple, Blue, Green, Yellow, Orange, Red, Opacity, Base, Brand.Primary/Secondary), `Number Scale.2's.*` (spacing/sizing, 2–999), `Shadow_Strong/Emphasize/Normal`, and typography composites (`Headline`, `Caption`, `Titles.*`, `Body.*`, `Label.*`) which already bundle font family/weight/size/line-height — use the composite, don't reassemble it from primitives.
 
+### CSS (public card page / any web surface)
+
+`design-tokens/tokens.css` is generated from `tokens.json` by `design-tokens/build-css.py` (stdlib only, no deps). **It is a build artifact — never hand-edit it**; edit `tokens.json` (re-export from Tokens Studio) and rerun `python3 design-tokens/build-css.py`.
+
+- Colours, spacing, and shadows are CSS custom properties on `:root` — e.g. `var(--color-brand-primary-500)`, `var(--spacing-m)`, `box-shadow: var(--shadow-normal)`.
+- Typography composites are utility classes, not vars — e.g. `.text-headline`, `.text-titles-large`, `.text-body-base-bold`, `.text-label-default`. Apply the class rather than assembling `font-*` properties by hand.
+- The Next.js public card page imports `design-tokens/tokens.css` once (e.g. in its root layout/`globals.css` via `@import`) — don't copy values into component-level CSS.
+
 ## Conventions
 
 - TypeScript strict; no `any` in committed code.
