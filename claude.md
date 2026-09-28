@@ -20,8 +20,6 @@ The full screen specification lives in `docs/spec.md` (English). **The spec is t
 
 ## Commands
 
-<!-- Update after scaffolding; keep this list accurate. -->
-
 ```bash
 npm start              # Expo dev server
 npm run ios            # dev build, iOS
@@ -58,9 +56,8 @@ liters  = round(fillRatio * bagSizeLiters, 1)
 `design-tokens/tokens.json` is the design system — synced from Figma via Tokens Studio (DTCG format). **It is the only source of colour, spacing, shadow and typography values.** No exceptions:
 
 - Never hard-code a hex colour, px/dp spacing number, font size, weight, or shadow in component code. If a value isn't in `design-tokens/tokens.json`, it doesn't exist yet — flag it and ask, don't invent or approximate one.
-- `src/theme/` (once scaffolded) must be generated or hand-mapped **from** `design-tokens/tokens.json` — same names, same values, no drift. If they disagree, `design-tokens/tokens.json` wins; fix `src/theme/` to match.
-- When `design-tokens/tokens.json` changes (re-exported from Tokens Studio), regenerate/update `src/theme/` in the same change — don't let them go stale relative to each other.
-- Token groups: `Color.*` (GreyScale, Pink, Purple, Blue, Green, Yellow, Orange, Red, Opacity, Base, Brand.Primary/Secondary), `Number Scale.2's.*` (spacing/sizing, 2–999), `Shadow_Strong/Emphasize/Normal`, and typography composites (`Headline`, `Caption`, `Titles.*`, `Body.*`, `Label.*`) which already bundle font family/weight/size/line-height — use the composite, don't reassemble it from primitives.
+- `src/theme/tokens.ts` is **generated** from `design-tokens/tokens.json` by `design-tokens/build-theme.py` (stdlib only, no deps) — same names, same values, no drift. **Never hand-edit `src/theme/tokens.ts`.** Edit `tokens.json` (re-export from Tokens Studio) and rerun `python3 design-tokens/build-theme.py` in the same change; import from it via `src/theme` (barrel export) in components.
+- Token groups: `Color.*` (GreyScale, Pink, Purple, Blue, Green, Yellow, Orange, Red, Opacity, Base, Brand.Primary/Secondary), `Number Scale.2's.*` (spacing/sizing, 2–999), `Shadow_Strong/Emphasize/Normal`, and typography composites (`Headline`, `Caption`, `Titles.*`, `Body.*`, `Label.*`) which already bundle font family/weight/size/line-height — use the composite (`typography.titles.large`, etc.), don't reassemble it from primitives. `shadows.*` gives raw Figma layers (`x`/`y`/`blur`/`spread`/`color`); RN only renders one shadow layer natively, so a shadow-wrapper component will need to pick/approximate — that's implementation work, not a token concern.
 
 ### CSS (public card page / any web surface)
 
