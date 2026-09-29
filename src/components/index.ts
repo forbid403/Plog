@@ -16,3 +16,5 @@ export { default as CaretLeftIcon } from './icons/CaretLeftIcon';
 export type { CaretLeftIconProps } from './icons/CaretLeftIcon';
 export { default as DotsThreeVerticalIcon } from './icons/DotsThreeVerticalIcon';
 export type { DotsThreeVerticalIconProps } from './icons/DotsThreeVerticalIcon';
+export { default as BottomSheet } from './BottomSheet';
+export type { BottomSheetProps, BottomSheetHandle } from './BottomSheet';
