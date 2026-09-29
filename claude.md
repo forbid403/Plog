@@ -11,6 +11,7 @@ The full screen specification lives in `docs/spec.md` (English). **The spec is t
 ## Stack
 
 - **App:** Expo (React Native) + TypeScript, iOS and Android
+- **Navigation:** Expo Router (file-based, `app/`). Tab bar visibility (0.3) is handled by which route group a screen lives in — `app/(tabs)/` gets the floating `BottomNavigation`; push screens that must hide it (Plog recording, Litter log, Impact card, …) outside that group.
 - **Maps:** `react-native-maps`
 - **Location:** `expo-location` + `expo-task-manager` (background), points buffered in `expo-sqlite`
 - **Media:** `expo-image-picker`, `expo-image-manipulator`, `expo-media-library`, `react-native-view-shot`
