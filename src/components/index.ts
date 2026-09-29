@@ -26,3 +26,7 @@ export { default as ButtonRound } from './ButtonRound';
 export type { ButtonRoundProps, ButtonRoundSize, ButtonRoundVariant, ButtonRoundRenderIconProps } from './ButtonRound';
 export { default as CaretDownIcon } from './icons/CaretDownIcon';
 export type { CaretDownIconProps } from './icons/CaretDownIcon';
+export { default as Avatar } from './Avatar';
+export type { AvatarProps, AvatarSize } from './Avatar';
+export { default as CameraIcon } from './icons/CameraIcon';
+export type { CameraIconProps } from './icons/CameraIcon';
