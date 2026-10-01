@@ -28,9 +28,35 @@ npm run android        # dev build, Android
 npm test               # Jest
 npm run lint           # ESLint
 npm run typecheck      # tsc --noEmit
+
+supabase start          # local Postgres/Auth/Storage (Docker) — prints the URL + anon key for .env
+supabase stop            # stop it
+supabase db reset        # drop and reapply supabase/migrations/ + supabase/seed.sql
 ```
 
 Background location does **not** work in Expo Go — use a development build.
+
+## Backend
+
+Supabase. Local dev (no project link needed yet — `supabase init` was run, nothing's linked):
+
+1. `supabase start` (needs Docker running) — prints a local Project URL and a `sb_publishable_...` key.
+2. `cp .env.example .env`, paste those two values in as `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+3. `npm start` — `src/api/supabase.ts` throws immediately on missing env vars, so a misconfigured `.env` fails loudly, not with a silent network error.
+
+**Schema** (`supabase/migrations/`, applied in order): `profiles` (A4), `sessions` (C6/D2-D5/E/F — one row per session, `route` is a jsonb array per G7.3, litter/impact columns are null until logged), `badges` (static catalog, seeded) + `user_badges` (G5.4). RLS on every table restricts rows to `auth.uid()`; `badges` is a public-to-authenticated-users read-only catalog. Storage buckets `avatars` / `session-photos` / `impact-cards` are public-read, owner-write-only (path must start with `{user_id}/`).
+
+**`src/api/auth.ts`** implements A4's sign-up (anonymous sign-in + profile row); `src/api/supabase.ts` is the client, session persisted via `expo-secure-store`.
+
+**Not set up yet** (all [Proposed] in spec — build alongside the screen that needs it, not as infra):
+
+- Reverse geocoding → `sessions.place_name` (B5.1/G7.2)
+- Route thumbnail generation → `sessions.route_thumbnail_url`
+- Impact card image generation → `sessions.impact_card_url` (E)
+- Badge award computation (streak/distance thresholds → `user_badges` + D7's `newBadges`) — likely a Postgres function or Edge Function triggered on session save
+- Linking a real hosted project (`supabase link`) and its migration-deploy workflow
+
+When one of these needs building, check whether it's a DB function/trigger (keeps it transactional with the session save) or an Edge Function (needed if it calls an external API, e.g. reverse geocoding) before choosing — don't default to Edge Functions for everything.
 
 ## Domain rules that must not drift
 
