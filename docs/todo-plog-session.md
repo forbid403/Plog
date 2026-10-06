@@ -14,9 +14,14 @@ once My exists, but the screen itself doesn't depend on it.
 
 ## State machine (C1)
 
-- [ ] `usePlogSession` (or similar) hook/store driving `idle | recording |
-      paused` — idle/recording/paused screens all read from this one place
-      so background-kill recovery doesn't desync them
+- [x] `usePlogSession` hook/store driving `idle | recording | paused` —
+      idle/recording/paused screens all read from this one place so
+      background-kill recovery doesn't desync them
+      (`src/hooks/usePlogSession.ts`, persisted via `expo-sqlite`
+      — `src/lib/plogSessionDb.ts` + time math in
+      `src/lib/plogSessionTime.ts`, unit tested). Scope note: this only
+      covers status/timing: GPS points (C3.1) and the server save (C6)
+      are separate, not done yet.
 
 ## C2. Idle screen
 
