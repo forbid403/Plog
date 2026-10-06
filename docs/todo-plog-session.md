@@ -23,17 +23,33 @@ once My exists, but the screen itself doesn't depend on it.
       covers status/timing: GPS points (C3.1) and the server save (C6)
       are separate, not done yet.
 
-## C2. Idle screen
+## C2. Idle screen — done (`app/(tabs)/plog.tsx`)
 
-- [ ] Full-screen map, blue dot for current location, nearby POIs
-- [ ] Start button (round, green) — `ButtonRound variant="fill"`
-- [ ] Top-left: re-centre-on-location button, shown only after the user
-      pans the map [Recommended]
-- [ ] Map follows current location until the user pans [Proposed]
-- [ ] `Start` disabled + `Finding GPS…` until accuracy is acceptable
-      [Proposed]
-- [ ] No-permission state: message + button to Settings
-- [ ] Tab bar shown here (Plog is a tab) [Recommended]
+- [x] Full-screen map, blue dot for current location (`showsUserLocation`).
+      Nearby POIs are Apple/Google Maps' own default — not disabled, nothing
+      extra to build
+- [x] Start button (round, green) — `ButtonRound variant="fill"`. On press:
+      `usePlogSession().start()` then navigates to `/plog-session`
+      (placeholder stub for C3, see below)
+- [x] Top-left re-centre button, shown only after panning — new
+      `LocateIcon` (generic crosshair, **not from Figma** — no node was
+      given for this button)
+- [x] Map follows current location until the user pans [Proposed]
+- [x] `Start` disabled + `Finding GPS…` until accuracy ≤20m — **our own
+      threshold**, spec doesn't give a number
+- [x] No-permission state: message (copy **not in spec, flagged** in code
+      comment, not final) + `Open Settings` button
+- [x] Tab bar shown — automatic, idle screen lives in `app/(tabs)/` same as
+      Home/My
+
+Known gap: no Figma was fetched for this screen's exact layout, so the
+Start button's position (clearing the floating tab bar) is a reasonable
+guess, not pixel-matched — revisit once/if a Figma node exists for it.
+
+`app/plog-session.tsx` is a **temporary stub** destination (outside
+`(tabs)` so the tab bar hides, per spec 0.3) — just proves navigation +
+the state machine work, with a Discard button to get back out. Gets
+replaced by the real C3 screen below.
 
 ## C3. Recording screen
 

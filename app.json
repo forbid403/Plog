@@ -24,7 +24,13 @@
     "plugins": [
       "expo-sqlite",
       "expo-secure-store",
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Plog uses your location to record your plogging route."
+        }
+      ]
     ],
     "scheme": "plog"
   }
