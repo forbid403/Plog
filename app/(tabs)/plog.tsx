@@ -127,50 +127,50 @@ export default function PlogScreen() {
         )}
       </MapView>
 
-      {recording ? (
-        <View style={[styles.pill, styles.statusPill, { top: insets.top + spacing.s }]}>
-          <Text style={styles.pillText}>{gpsOk ? 'Session on track' : 'Weak GPS signal'}</Text>
-        </View>
-      ) : (
-        // Spec (C2) says show this only after panning [Recommended, not
-        // Confirmed] — always-visible is the more discoverable, more common
-        // pattern (Google/Apple Maps etc.) and matches direct testing
-        // feedback that the conditional version was easy to miss.
-        <CircleIconButton
-          accessibilityLabel="Re-centre on my location"
-          onPress={recentre}
-          icon={({ color, size }) => <LocateIcon color={color} size={size} />}
-          style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
-        />
-      )}
-
-      {/* No Figma reference for this screen's exact layout — bottom offset is
-          sized to clear the floating BottomNavigation (~82px tall incl. its
-          own bottom gap) plus a margin, not a spec'd number. */}
-      {recording ? (
-        <View style={[styles.bottomBar, { bottom: insets.bottom + spacing.xl }]}>
+      {/* Top area: status pill while recording, time/distance flank it so
+          nothing here ever collides with the re-centre button or the main
+          action button below — both of those stay put regardless of state. */}
+      {recording && (
+        <View style={[styles.topBar, { top: insets.top + spacing.s }]}>
           <View style={styles.pill}>
             <Text style={styles.pillText}>{formatDuration(elapsedSec)}</Text>
           </View>
-
-          <ButtonRound size="display" variant="fill" tone="secondary" label="Pause" icon={null} onPress={pause} />
-
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>{gpsOk ? 'Session on track' : 'Weak GPS signal'}</Text>
+          </View>
           <View style={styles.pill}>
             <Text style={styles.pillText}>{formatDistanceKm(distanceKm, 2)} km</Text>
           </View>
         </View>
-      ) : (
-        <View style={[styles.startButtonWrapper, { bottom: insets.bottom + 82 + spacing.l }]}>
-          <ButtonRound
-            size="display"
-            variant="fill"
-            label={gpsReady ? 'Start' : 'Finding GPS…'}
-            icon={null}
-            disabled={!gpsReady}
-            onPress={start}
-          />
-        </View>
       )}
+
+      {/* Spec (C2) says show this only after panning [Recommended, not
+          Confirmed] — always-visible is the more discoverable, more common
+          pattern (Google/Apple Maps etc.) and matches direct testing
+          feedback that the conditional version was easy to miss. Stays up
+          while recording too — it's "where am I", not an idle-only control. */}
+      <CircleIconButton
+        accessibilityLabel="Re-centre on my location"
+        onPress={recentre}
+        icon={({ color, size }) => <LocateIcon color={color} size={size} />}
+        style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
+      />
+
+      {/* One button, same spot, in both states — only its color/label/action
+          change (tone/label swap below), not its position (no Figma
+          reference for this screen's exact layout; the bottom offset clears
+          the floating BottomNavigation, ~82px tall incl. its own gap). */}
+      <View style={[styles.actionButtonWrapper, { bottom: insets.bottom + 82 + spacing.l }]}>
+        <ButtonRound
+          size="display"
+          variant="fill"
+          tone={recording ? 'secondary' : 'primary'}
+          label={recording ? 'Pause' : gpsReady ? 'Start' : 'Finding GPS…'}
+          icon={null}
+          disabled={!recording && !gpsReady}
+          onPress={recording ? pause : start}
+        />
+      </View>
     </View>
   );
 }
@@ -185,20 +185,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base.white,
     borderColor: colors.base.white,
   },
-  statusPill: {
+  actionButtonWrapper: {
     position: 'absolute',
     alignSelf: 'center',
   },
-  startButtonWrapper: {
-    position: 'absolute',
-    alignSelf: 'center',
-  },
-  bottomBar: {
+  topBar: {
     position: 'absolute',
     left: spacing.l,
     right: spacing.l,
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   pill: {
