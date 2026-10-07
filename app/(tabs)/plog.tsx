@@ -1,20 +1,27 @@
-import { router } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
-import MapView from 'react-native-maps';
+import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../src/components/Button';
 import ButtonRound from '../../src/components/ButtonRound';
 import CircleIconButton from '../../src/components/CircleIconButton';
 import LocateIcon from '../../src/components/icons/LocateIcon';
-import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
-import { colors, shadows, spacing, typography } from '../../src/theme';
+import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { shadowLayerToStyle } from '../../src/lib/shadow';
+import { formatDistanceKm, formatDuration } from '../../src/lib/format';
+import { getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
+import { computeDistanceKm, type RoutePoint } from '../../src/lib/plogSessionDistance';
+import { colors, shadows, spacing, typography } from '../../src/theme';
 
 // [Proposed] — spec (C2) says "until accuracy is acceptable" without a
 // number; 20m horizontal accuracy is our own threshold, not Figma/spec.
 const ACCEPTABLE_ACCURACY_M = 20;
+// C3 doesn't give a number for "weak" either — reusing C5's own low-accuracy
+// cutoff (points worse than this are excluded from distance anyway).
+const WEAK_SIGNAL_ACCURACY_M = 30;
+const POINTS_POLL_INTERVAL_MS = 2000;
 
 // The re-centre button needs to read clearly over a busy map, so it's solid
 // white + a real shadow here instead of CircleIconButton's default "glass"
@@ -30,25 +37,29 @@ const FALLBACK_REGION = {
   longitudeDelta: 0.02,
 };
 
-/** Idle screen (C2) — full-screen map, Start button. Spec's "Plog session" state flow begins here. */
+function toRoutePoint(row: PlogPointRow): RoutePoint {
+  return { lat: row.lat, lng: row.lng, accuracy: row.accuracy, isPaused: row.is_paused === 1 };
+}
+
+/**
+ * Plog tab (C1-C3): idle and recording are one screen, branching on
+ * usePlogSession().status, rather than a route change between them — a
+ * separate /plog-session route had a whole class of navigation/hydration
+ * races (see git history) that just don't exist with no navigation at all.
+ * Tab bar hiding while recording (spec 0.3) is handled by
+ * app/(tabs)/_layout.tsx reading this same status, not by leaving this
+ * route group.
+ */
 export default function PlogScreen() {
   const insets = useSafeAreaInsets();
+  const db = useSQLiteContext();
   const { permission, location } = useCurrentLocation();
-  const { status, hydrated, start } = usePlogSession();
+  const { status, sessionId, elapsedSec, start, pause } = usePlogSession();
   const mapRef = useRef<MapView>(null);
   const [following, setFollowing] = useState(true);
+  const [points, setPoints] = useState<PlogPointRow[]>([]);
 
-  // C3.1 recovery, the idle-screen side of it: if a session is already
-  // recording/paused (e.g. the app was relaunched, or a previous Start
-  // landed here without navigating away — see that bugfix), go straight to
-  // it instead of showing Start and risking a second plog_sessions row.
-  // (status defaults to 'idle' pre-hydration, so this is gated the same
-  // way as plog-session.tsx's redirect — not actually dangerous in this
-  // direction, since the default is 'idle', but checking `hydrated` keeps
-  // the two screens' logic consistent rather than relying on that.)
-  useEffect(() => {
-    if (hydrated && status !== 'idle') router.push('/plog-session');
-  }, [hydrated, status]);
+  const recording = status !== 'idle';
 
   useEffect(() => {
     if (!location || !following) return;
@@ -57,14 +68,28 @@ export default function PlogScreen() {
     });
   }, [location, following]);
 
-  const recentre = () => {
-    setFollowing(true);
-  };
+  // GPS points are only relevant once a session exists — polls plog_points
+  // (written by the background task, C3.1) while recording/paused. No need
+  // to reset `points` to [] when sessionId goes null: that only happens
+  // leaving `recording`, which is exactly when this data stops being
+  // rendered, and the next session's first poll overwrites it anyway.
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    const poll = () => {
+      getPointsForSession(db, sessionId).then((rows) => {
+        if (!cancelled) setPoints(rows);
+      });
+    };
+    poll();
+    const interval = setInterval(poll, POINTS_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [db, sessionId]);
 
-  const onStart = async () => {
-    await start();
-    router.push('/plog-session');
-  };
+  const recentre = () => setFollowing(true);
 
   if (permission === 'denied') {
     return (
@@ -78,6 +103,8 @@ export default function PlogScreen() {
 
   const accuracy = location?.coords.accuracy ?? null;
   const gpsReady = accuracy !== null && accuracy <= ACCEPTABLE_ACCURACY_M;
+  const gpsOk = accuracy !== null && accuracy <= WEAK_SIGNAL_ACCURACY_M;
+  const distanceKm = computeDistanceKm(points.map(toRoutePoint));
 
   return (
     <View style={styles.container}>
@@ -90,32 +117,60 @@ export default function PlogScreen() {
         zoomEnabled
         zoomTapEnabled
         onPanDrag={() => setFollowing(false)}
-      />
+      >
+        {recording && points.length > 1 && (
+          <Polyline
+            coordinates={points.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
+            strokeColor={colors.brand.primary['500']}
+            strokeWidth={4}
+          />
+        )}
+      </MapView>
 
-      {/* Spec (C2) says show this only after panning [Recommended, not
-          Confirmed] — always-visible is the more discoverable, more common
-          pattern (Google/Apple Maps etc.) and matches direct testing
-          feedback that the conditional version was easy to miss. */}
-      <CircleIconButton
-        accessibilityLabel="Re-centre on my location"
-        onPress={recentre}
-        icon={({ color, size }) => <LocateIcon color={color} size={size} />}
-        style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
-      />
+      {recording ? (
+        <View style={[styles.pill, styles.statusPill, { top: insets.top + spacing.s }]}>
+          <Text style={styles.pillText}>{gpsOk ? 'Session on track' : 'Weak GPS signal'}</Text>
+        </View>
+      ) : (
+        // Spec (C2) says show this only after panning [Recommended, not
+        // Confirmed] — always-visible is the more discoverable, more common
+        // pattern (Google/Apple Maps etc.) and matches direct testing
+        // feedback that the conditional version was easy to miss.
+        <CircleIconButton
+          accessibilityLabel="Re-centre on my location"
+          onPress={recentre}
+          icon={({ color, size }) => <LocateIcon color={color} size={size} />}
+          style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
+        />
+      )}
 
       {/* No Figma reference for this screen's exact layout — bottom offset is
           sized to clear the floating BottomNavigation (~82px tall incl. its
           own bottom gap) plus a margin, not a spec'd number. */}
-      <View style={[styles.startButtonWrapper, { bottom: insets.bottom + 82 + spacing.l }]}>
-        <ButtonRound
-          size="display"
-          variant="fill"
-          label={gpsReady ? 'Start' : 'Finding GPS…'}
-          icon={null}
-          disabled={!gpsReady}
-          onPress={onStart}
-        />
-      </View>
+      {recording ? (
+        <View style={[styles.bottomBar, { bottom: insets.bottom + spacing.xl }]}>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>{formatDuration(elapsedSec)}</Text>
+          </View>
+
+          <ButtonRound size="display" variant="fill" tone="secondary" label="Pause" icon={null} onPress={pause} />
+
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>{formatDistanceKm(distanceKm, 2)} km</Text>
+          </View>
+        </View>
+      ) : (
+        <View style={[styles.startButtonWrapper, { bottom: insets.bottom + 82 + spacing.l }]}>
+          <ButtonRound
+            size="display"
+            variant="fill"
+            label={gpsReady ? 'Start' : 'Finding GPS…'}
+            icon={null}
+            disabled={!gpsReady}
+            onPress={start}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -130,9 +185,34 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base.white,
     borderColor: colors.base.white,
   },
+  statusPill: {
+    position: 'absolute',
+    alignSelf: 'center',
+  },
   startButtonWrapper: {
     position: 'absolute',
     alignSelf: 'center',
+  },
+  bottomBar: {
+    position: 'absolute',
+    left: spacing.l,
+    right: spacing.l,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  pill: {
+    backgroundColor: colors.base.white,
+    borderRadius: spacing.full,
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.s,
+  },
+  pillText: {
+    fontFamily: typography.label.default.fontFamily,
+    fontWeight: typography.label.default.fontWeight,
+    fontSize: typography.label.default.fontSize,
+    letterSpacing: typography.label.default.letterSpacing,
+    color: colors.greyScale['900'],
   },
   permissionContainer: {
     flex: 1,

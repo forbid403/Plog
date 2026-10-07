@@ -29,8 +29,9 @@ once My exists, but the screen itself doesn't depend on it.
       Nearby POIs are Apple/Google Maps' own default — not disabled, nothing
       extra to build
 - [x] Start button (round, green) — `ButtonRound variant="fill"`. On press:
-      `usePlogSession().start()` then navigates to `/plog-session`
-      (placeholder stub for C3, see below)
+      `usePlogSession().start()` — no navigation, this screen's own UI
+      switches to the recording layout once `status !== 'idle'` (see the
+      architecture note below)
 - [x] Top-left re-centre button, shown only after panning — new
       `LocateIcon` (generic crosshair, **not from Figma** — no node was
       given for this button)
@@ -46,12 +47,21 @@ Known gap: no Figma was fetched for this screen's exact layout, so the
 Start button's position (clearing the floating tab bar) is a reasonable
 guess, not pixel-matched — revisit once/if a Figma node exists for it.
 
-`app/plog-session.tsx` is a **temporary stub** destination (outside
-`(tabs)` so the tab bar hides, per spec 0.3) — just proves navigation +
-the state machine work, with a Discard button to get back out. Gets
-replaced by the real C3 screen below.
+**Architecture note (superseding the original plan below):** idle and
+recording turned out to belong in **one screen**, not two routes. An
+earlier version pushed to a separate `/plog-session` route on Start, which
+hit a whole class of navigation/hydration-race bugs (double-tap making
+duplicate `plog_sessions` rows, a race where the new screen's status read
+'idle' before its DB hydration finished and bounced straight back — looked
+exactly like "Start does nothing", found by checking the DB directly since
+it happened faster than a screenshot could catch). Switching to one screen
+that branches on `usePlogSession().status` removed the bug class entirely
+— see git history (search "hydration race", "duplicate plog_sessions") for
+the full debugging trail. Tab bar hiding (spec 0.3) now comes from
+`app/(tabs)/_layout.tsx`'s tab bar reading that same status, not from
+leaving the route group.
 
-## C3. Recording screen — done (`app/plog-session.tsx`)
+## C3. Recording screen — done, merged into `app/(tabs)/plog.tsx`
 
 - [x] Status pill, top centre: `Session on track` / `Weak GPS signal` —
       threshold reused from C5's own 30m low-accuracy cutoff (C3 itself
@@ -82,7 +92,7 @@ replaced by the real C3 screen below.
 - [x] Task writes straight to `plog_points` via a **fresh** `expo-sqlite`
       connection (`openDatabaseAsync`, not `useSQLiteContext` — the task
       runs outside the React tree, possibly in a headless JS context).
-      `app/plog-session.tsx` only reads (polls every 2s)
+      `app/(tabs)/plog.tsx` only reads (polls every 2s)
 - [x] Points marked `is_paused` by reading the *live* `plog_sessions.status`
       row inside the task — single source of truth, not a copy the task
       carries in memory — then excluded from `computeDistanceKm` (C5)
@@ -93,13 +103,21 @@ replaced by the real C3 screen below.
 - [x] `app.json`: `isIosBackgroundLocationEnabled` /
       `isAndroidBackgroundLocationEnabled` / `isAndroidForegroundServiceEnabled`
       + `locationAlwaysAndWhenInUsePermission`, `expo-task-manager` plugin added
-- [ ] ⚠️ **Not tested on a real device/dev build yet** — background
-      location doesn't work in Expo Go at all (OS kills the JS context),
-      so this is verified by code review + `expo export`/`expo config`
-      only so far. Needs `npx expo run:ios` (or an EAS dev build) +
-      actual backgrounding to confirm end-to-end
-  - [ ] Route testing once on a dev build: iOS Simulator location
-        simulation (City Run) / GPX playback in Android emulator
+- [x] **Verified on a real dev build** (`npx expo run:ios`, simulator):
+      the task fires and writes real points (lat/lng/accuracy/timestamp)
+      to `plog_points`, confirmed by reading the SQLite file directly, not
+      just by screenshot — a foreground UI bug (see architecture note
+      above) made the recording screen unreachable at the time, but the
+      background task itself was recording correctly underneath the whole
+      time regardless
+- [x] `kCLErrorDomain Code=0` (`kCLErrorLocationUnknown`) downgraded from
+      `console.error` to `console.warn` — Apple docs call it often-transient
+      (e.g. simulator with no simulated location set yet), not fatal
+- [ ] Not yet tested: actually backgrounding the app (Cmd+Shift+H / home
+      button) mid-recording and confirming points keep arriving — so far
+      only confirmed foregrounded on the dev build
+  - [ ] Route testing: iOS Simulator location simulation (City Run) / GPX
+        playback in Android emulator
 - [ ] If background permission is denied, `start()` logs a warning and
       proceeds foreground-only (not blocking) — not verified this
       degrades gracefully rather than just silently losing points once
