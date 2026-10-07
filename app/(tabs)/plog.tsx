@@ -81,7 +81,7 @@ export default function PlogScreen() {
         accessibilityLabel="Re-centre on my location"
         onPress={recentre}
         icon={({ color, size }) => <LocateIcon color={color} size={size} />}
-        style={[styles.recentreButton, { top: insets.top + spacing.s }]}
+        style={[styles.recentreButton, { bottom: insets.bottom + 82 + spacing.l }]}
       />
 
       {/* No Figma reference for this screen's exact layout — bottom offset is
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   recentreButton: {
     position: 'absolute',
-    left: spacing.l,
+    right: spacing.l,
   },
   startButtonWrapper: {
     position: 'absolute',
