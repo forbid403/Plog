@@ -1,5 +1,7 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useState } from 'react';
+import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationTask';
+import { deletePointsForSession } from '../lib/plogPointsDb';
 import {
   deletePlogSession,
   getActivePlogSession,
@@ -21,14 +23,21 @@ export type PlogSessionSummary = {
 
 export type UsePlogSessionResult = {
   status: PlogSessionStatus;
+  /** Null when idle. Read GPS points for this session from plog_points (plogPointsDb.ts). */
+  sessionId: string | null;
   /** Active recording time in seconds — excludes paused periods (C3), live-updates once a second while recording. */
   elapsedSec: number;
   start: () => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
-  /** Ends the session (called from the finish sheet's "Finish & Log litter", C4) and returns its summary for C6's save. */
+  /**
+   * Ends the session (finish sheet's "Finish & Log litter", C4), stops
+   * background tracking, and returns its summary for C6's save. Points
+   * stay in `plog_points` (keyed by the returned id) — C6 reads and then
+   * cleans them up after a successful upload, not this.
+   */
   finish: () => Promise<PlogSessionSummary>;
-  /** Deletes the in-progress session (finish sheet's "Discard", C4). */
+  /** Deletes the in-progress session and its points, stops background tracking (finish sheet's "Discard", C4). */
   discard: () => Promise<void>;
 };
 
@@ -45,8 +54,14 @@ function localId(): string {
  * expo-sqlite so an in-progress session survives the app being killed
  * (C3.1 recovery — on mount, this hook hydrates from whatever's in the DB).
  *
- * Scope: status + timing only. GPS point recording (C3.1) and the server
- * save (C6) are separate, built alongside this.
+ * Also owns the background location task's lifecycle (C3.1): start() turns
+ * it on, finish()/discard() turn it off — pause()/resume() deliberately
+ * don't touch it, the task keeps running and just marks points `is_paused`
+ * based on this hook's own status (see backgroundLocationTask.ts).
+ *
+ * GPS points themselves live in plog_points (plogPointsDb.ts), read via
+ * `sessionId` — not returned from this hook directly. The server save (C6)
+ * is still separate, not built yet.
  */
 export function usePlogSession(): UsePlogSessionResult {
   const db = useSQLiteContext();
@@ -73,6 +88,7 @@ export function usePlogSession(): UsePlogSessionResult {
     await insertPlogSession(db, id, startedAt);
     setRow({ id, status: 'recording', started_at: startedAt, paused_at: null, paused_duration_sec: 0 });
     setNow(new Date());
+    await startBackgroundLocationTracking();
   }, [db]);
 
   const pause = useCallback(async () => {
@@ -100,6 +116,7 @@ export function usePlogSession(): UsePlogSessionResult {
       pausedAt: row.paused_at,
       now: new Date(),
     });
+    await stopBackgroundLocationTracking();
     await deletePlogSession(db, row.id);
     setRow(null);
     return { id: row.id, startedAt: row.started_at, endedAt, durationSec };
@@ -107,6 +124,8 @@ export function usePlogSession(): UsePlogSessionResult {
 
   const discard = useCallback(async () => {
     if (!row) return;
+    await stopBackgroundLocationTracking();
+    await deletePointsForSession(db, row.id);
     await deletePlogSession(db, row.id);
     setRow(null);
   }, [db, row]);
@@ -123,6 +142,7 @@ export function usePlogSession(): UsePlogSessionResult {
 
   return {
     status: row?.status ?? 'idle',
+    sessionId: row?.id ?? null,
     elapsedSec,
     start,
     pause,

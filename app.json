@@ -28,9 +28,14 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Plog uses your location to record your plogging route."
+          "locationWhenInUsePermission": "Plog uses your location to record your plogging route.",
+          "locationAlwaysAndWhenInUsePermission": "Plog uses your location to record your plogging route, including while the app is in the background.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
         }
-      ]
+      ],
+      "expo-task-manager"
     ],
     "scheme": "plog"
   }
