@@ -28,6 +28,9 @@ const ACCEPTABLE_ACCURACY_M = 20;
 // cutoff (points worse than this are excluded from distance anyway).
 const WEAK_SIGNAL_ACCURACY_M = 30;
 const POINTS_POLL_INTERVAL_MS = 2000;
+// C4's minimum session: under 1 minute or under 0.1 km cannot be saved.
+const MIN_SESSION_SEC = 60;
+const MIN_SESSION_KM = 0.1;
 
 // The re-centre button needs to read clearly over a busy map, so it's solid
 // white + a real shadow here instead of CircleIconButton's default "glass"
@@ -73,7 +76,7 @@ export default function PlogScreen() {
   const insets = useSafeAreaInsets();
   const db = useSQLiteContext();
   const { permission, location } = useCurrentLocation();
-  const { status, sessionId, elapsedSec, start, pause, resume, discard } = usePlogSession();
+  const { status, sessionId, elapsedSec, start, pause, resume, finish, discard } = usePlogSession();
   const mapRef = useRef<MapView>(null);
   const [following, setFollowing] = useState(true);
   const [points, setPoints] = useState<PlogPointRow[]>([]);
@@ -158,6 +161,21 @@ export default function PlogScreen() {
   const elevGainText = String(computeElevationGainM(routePoints));
   // Spec doesn't define pace before any distance exists — 0′00″ until then.
   const paceText = formatPace(computeAvgPaceSecPerKm(elapsedSec, distanceKm) ?? 0);
+
+  // C4: tapping Finish on a too-short session shows the "too short" message
+  // with Resume/Discard instead of saving. Finish itself ends the session
+  // and returns to idle — it doesn't continue into Litter log (Part D
+  // isn't built yet), flagged rather than guessed at.
+  const confirmFinish = () => {
+    if (elapsedSec < MIN_SESSION_SEC || distanceKm < MIN_SESSION_KM) {
+      Alert.alert('This session is too short to save.', undefined, [
+        { text: 'Resume', style: 'cancel' },
+        { text: 'Discard', style: 'destructive', onPress: () => discard() },
+      ]);
+      return;
+    }
+    finish();
+  };
 
   return (
     <View style={styles.container}>
@@ -273,8 +291,7 @@ export default function PlogScreen() {
                   <Button
                     label="Finish"
                     size="full"
-                    // C4's finish sheet isn't built yet.
-                    onPress={() => {}}
+                    onPress={confirmFinish}
                     leadIcon={({ size }) => <FlagCheckeredIcon color={colors.greyScale['900']} size={size} />}
                     style={{ backgroundColor: colors.orange['500'] }}
                   />

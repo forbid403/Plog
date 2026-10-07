@@ -125,13 +125,31 @@ leaving the route group.
 
 ## C4. Pause / finish sheet
 
-- [ ] Reuse **`BottomSheet`** (already built)
-- [ ] `Finished your plog session?` + time/distance/elevation summary
-- [ ] `Resume` (and drag-down = same as Resume [Proposed])
-- [ ] `Finish & Log litter →` — save session (C6), go to Litter log
-- [ ] `Discard this session` (red text) → confirm dialog → delete → idle
-- [ ] Minimum session: <1 min or <0.1 km can't be saved — show "too
-      short" message with `Resume`/`Discard` instead of `Finish`
+**Superseded by the node 117:518 Figma redesign** (see C2/C3's architecture
+note and the git history around "TrackingBottomSheet"): there's no separate
+modal finish sheet. Pausing turns the persistent recording sheet yellow and
+swaps its action button(s) to Resume, and Finish lives right there (in the
+sheet's Expanded state) rather than behind a dedicated "Finished your plog
+session?" dialog — the `BottomSheet` component was not reused, the
+redesign's sheet isn't dismissible/modal.
+
+- [x] Pause/Resume + Finish buttons in the sheet's Expanded state
+      (`app/(tabs)/plog.tsx`, both Default and Paused modes)
+- [x] Minimum session gate (<1 min or <0.1 km): Finish shows `This session
+      is too short to save.` via `Alert.alert` with Resume/Discard instead
+      of saving (`MIN_SESSION_SEC`/`MIN_SESSION_KM`, `confirmFinish`)
+- [x] Discard: same confirmation copy as spec (`Discard this session? This
+      can't be undone.`), wired to the top-left back button — **not** a
+      separate "Discard this session" text action, since the redesign
+      doesn't have the old modal's layout to put one in. Confirmed with
+      the user directly that the back button should be this
+- [x] Drag sheet down = collapse (not Resume — confirmed with the user the
+      drag gesture is purely the Collapse/Expand toggle, not tied to
+      Resume)
+- [ ] `Finish` calls `usePlogSession().finish()` (ends the session, returns
+      to idle) but does **not** continue into Litter log yet — Part D
+      doesn't exist. Revisit once D is built: wire the summary `finish()`
+      returns into C6's save + navigation
 
 ## C5. Calculation lib
 
