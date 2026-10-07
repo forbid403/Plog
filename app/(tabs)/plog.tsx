@@ -34,9 +34,17 @@ const FALLBACK_REGION = {
 export default function PlogScreen() {
   const insets = useSafeAreaInsets();
   const { permission, location } = useCurrentLocation();
-  const { start } = usePlogSession();
+  const { status, start } = usePlogSession();
   const mapRef = useRef<MapView>(null);
   const [following, setFollowing] = useState(true);
+
+  // C3.1 recovery, the idle-screen side of it: if a session is already
+  // recording/paused (e.g. the app was relaunched, or a previous Start
+  // landed here without navigating away — see that bugfix), go straight to
+  // it instead of showing Start and risking a second plog_sessions row.
+  useEffect(() => {
+    if (status !== 'idle') router.push('/plog-session');
+  }, [status]);
 
   useEffect(() => {
     if (!location || !following) return;
