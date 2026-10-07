@@ -22,7 +22,16 @@ type BackgroundLocationTaskData = { locations: Location.LocationObject[] };
  */
 TaskManager.defineTask<BackgroundLocationTaskData>(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
   if (error) {
-    console.error('[plog] background location task error:', error);
+    // kCLErrorDomain Code=0 is kCLErrorLocationUnknown — Apple's own docs
+    // say this is often transient (location manager just doesn't have a
+    // fix yet, e.g. no simulated location set) and shouldn't be treated as
+    // fatal. Only genuinely unexpected errors get logged as errors.
+    const isLocationUnknown = typeof error.message === 'string' && error.message.includes('kCLErrorDomain Code=0');
+    if (isLocationUnknown) {
+      console.warn('[plog] background location: no fix yet (kCLErrorLocationUnknown) — will retry on the next update');
+    } else {
+      console.error('[plog] background location task error:', error);
+    }
     return;
   }
   if (!data?.locations?.length) return;
