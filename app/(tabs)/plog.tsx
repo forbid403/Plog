@@ -1,14 +1,16 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../src/components/Button';
 import ButtonRound from '../../src/components/ButtonRound';
 import CircleIconButton from '../../src/components/CircleIconButton';
 import CaretDownIcon from '../../src/components/icons/CaretDownIcon';
+import FlagCheckeredIcon from '../../src/components/icons/FlagCheckeredIcon';
 import LocateIcon from '../../src/components/icons/LocateIcon';
 import PauseIcon from '../../src/components/icons/PauseIcon';
+import PlayIcon from '../../src/components/icons/PlayIcon';
 import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { shadowLayerToStyle } from '../../src/lib/shadow';
@@ -55,20 +57,21 @@ function toRoutePoint(row: PlogPointRow): RoutePoint {
  * route group.
  *
  * Recording UI matches Figma (Plog Design, node 681:2047 "Track - On
- * going") — a bottom sheet with Time/Pause/Distance, not the floating
- * pills an earlier version had before that reference existed. Idle UI has
- * no Figma reference, unchanged from before.
+ * going" + node 117:518 "TrackingBottomSheet" for its Collapse/Expand ×
+ * Default/Paused states). Idle UI has no Figma reference, unchanged.
  */
 export default function PlogScreen() {
   const insets = useSafeAreaInsets();
   const db = useSQLiteContext();
   const { permission, location } = useCurrentLocation();
-  const { status, sessionId, elapsedSec, start, pause } = usePlogSession();
+  const { status, sessionId, elapsedSec, start, pause, resume } = usePlogSession();
   const mapRef = useRef<MapView>(null);
   const [following, setFollowing] = useState(true);
   const [points, setPoints] = useState<PlogPointRow[]>([]);
+  const [expanded, setExpanded] = useState(false);
 
   const recording = status !== 'idle';
+  const paused = status === 'paused';
 
   useEffect(() => {
     if (!location || !following) return;
@@ -99,6 +102,7 @@ export default function PlogScreen() {
   }, [db, sessionId]);
 
   const recentre = () => setFollowing(true);
+  const toggleExpanded = () => setExpanded((current) => !current);
 
   if (permission === 'denied') {
     return (
@@ -114,6 +118,12 @@ export default function PlogScreen() {
   const gpsReady = accuracy !== null && accuracy <= ACCEPTABLE_ACCURACY_M;
   const gpsOk = accuracy !== null && accuracy <= WEAK_SIGNAL_ACCURACY_M;
   const distanceKm = computeDistanceKm(points.map(toRoutePoint));
+  const distanceText = formatDistanceKm(distanceKm, 2);
+  // C5's elevation gain / avg pace calculations aren't built yet — shown as
+  // 0 for now (same as distance before computeDistanceKm existed), not
+  // silently omitted, so the expand layout matches Figma's grid shape.
+  const elevGainText = '0';
+  const paceText = '0:00';
 
   return (
     <View style={styles.container}>
@@ -138,12 +148,13 @@ export default function PlogScreen() {
 
       {recording ? (
         <>
-          {/* Figma doesn't document what this does (no "Expand" state was
-              given, just this "Collapse" one) — wired to re-centre as the
-              most useful existing action, not a guessed new feature. */}
+          {/* Figma doesn't literally say this toggles the sheet, but the
+              sheet's own "Drag Area" is a <button> in Figma's export too
+              (not just draggable) — both this and the handle below do the
+              same expand/collapse toggle. */}
           <CircleIconButton
-            accessibilityLabel="Collapse"
-            onPress={recentre}
+            accessibilityLabel={expanded ? 'Collapse' : 'Expand'}
+            onPress={toggleExpanded}
             icon={({ size }) => <CaretDownIcon color={colors.brand.primary['700']} size={size} />}
             style={[styles.collapseButton, { top: insets.top + spacing.s }]}
           />
@@ -155,28 +166,99 @@ export default function PlogScreen() {
             <Text style={styles.statusPillText}>{gpsOk ? 'session on track' : 'Weak GPS signal'}</Text>
           </View>
 
-          <View style={[styles.sheet, { paddingBottom: insets.bottom || spacing.m }]}>
-            <View style={styles.handle} />
-            <View style={styles.sheetGrid}>
-              <View style={styles.metricColumn}>
-                <Text style={styles.metricValue}>{formatDuration(elapsedSec)}</Text>
-                <Text style={styles.metricLabel}>Time</Text>
-              </View>
+          <View
+            style={[
+              styles.sheet,
+              { paddingBottom: insets.bottom || spacing.m },
+              paused && { backgroundColor: colors.brand.secondary['200'] },
+            ]}
+          >
+            <Pressable onPress={toggleExpanded} accessibilityRole="button" accessibilityLabel={expanded ? 'Collapse' : 'Expand'}>
+              <View style={styles.handle} />
+            </Pressable>
 
-              <ButtonRound
-                size="big"
-                variant="fill"
-                tone="secondary"
-                icon={({ color, size }) => <PauseIcon color={color} size={size} />}
-                onPress={pause}
-                accessibilityLabel="Pause"
-              />
+            {expanded ? (
+              <View style={styles.expandContent}>
+                <View style={styles.expandGrid}>
+                  <View style={styles.expandMetricColumn}>
+                    <Text style={styles.metricValue}>{formatDuration(elapsedSec)}</Text>
+                    <Text style={styles.metricLabel}>Time</Text>
+                  </View>
+                  <View style={styles.expandMetricColumn}>
+                    <Text style={styles.metricValue}>{distanceText}</Text>
+                    <Text style={styles.metricLabel}>Distance (km)</Text>
+                  </View>
+                  <View style={styles.expandMetricColumn}>
+                    <Text style={styles.metricValue}>{elevGainText}</Text>
+                    <Text style={styles.metricLabel}>Elev.gain(m)</Text>
+                  </View>
+                  <View style={styles.expandMetricColumn}>
+                    <Text style={styles.metricValue}>{paceText}</Text>
+                    <Text style={styles.metricLabel}>Pace</Text>
+                  </View>
+                </View>
 
-              <View style={styles.metricColumn}>
-                <Text style={styles.metricValue}>{formatDistanceKm(distanceKm, 2)}</Text>
-                <Text style={styles.metricLabel}>Distance (km)</Text>
+                <View style={styles.expandButtons}>
+                  {paused ? (
+                    <Button
+                      label="Resume"
+                      size="full"
+                      onPress={resume}
+                      leadIcon={({ size }) => <PlayIcon color={colors.greyScale['900']} size={size} />}
+                      style={{ backgroundColor: colors.brand.primary['300'] }}
+                    />
+                  ) : (
+                    <Button
+                      label="Pause"
+                      size="full"
+                      onPress={pause}
+                      leadIcon={({ size }) => <PauseIcon color={colors.greyScale['900']} size={size} />}
+                      style={{ backgroundColor: colors.brand.secondary['300'] }}
+                    />
+                  )}
+                  <Button
+                    label="Finish"
+                    size="full"
+                    // C4's finish sheet isn't built yet.
+                    onPress={() => {}}
+                    leadIcon={({ size }) => <FlagCheckeredIcon color={colors.greyScale['900']} size={size} />}
+                    style={{ backgroundColor: colors.orange['500'] }}
+                  />
+                </View>
               </View>
-            </View>
+            ) : (
+              <View style={styles.collapseGrid}>
+                <View style={styles.collapseMetricColumn}>
+                  <Text style={styles.metricValue}>{formatDuration(elapsedSec)}</Text>
+                  <Text style={styles.metricLabel}>Time</Text>
+                </View>
+
+                {paused ? (
+                  <ButtonRound
+                    size="big"
+                    variant="fill"
+                    style={{ backgroundColor: colors.brand.primary['300'] }}
+                    icon={({ size }) => <PlayIcon color={colors.greyScale['900']} size={size} />}
+                    onPress={resume}
+                    accessibilityLabel="Resume"
+                  />
+                ) : (
+                  <ButtonRound
+                    size="big"
+                    variant="fill"
+                    style={{ backgroundColor: colors.brand.secondary['300'] }}
+                    icon={({ size }) => <PauseIcon color={colors.greyScale['900']} size={size} />}
+                    onPress={pause}
+                    accessibilityLabel="Pause"
+                  />
+                )}
+
+                <View style={styles.collapseMetricColumn}>
+                  <Text style={styles.metricValue}>{distanceText}</Text>
+                  <Text style={styles.metricLabel}>Distance (km)</Text>
+                </View>
+              </View>
+            )}
           </View>
         </>
       ) : (
@@ -202,7 +284,10 @@ export default function PlogScreen() {
               label={gpsReady ? 'Start' : 'Finding GPS…'}
               icon={null}
               disabled={!gpsReady}
-              onPress={start}
+              onPress={() => {
+                setExpanded(false); // each session starts collapsed, regardless of how the last one ended
+                start();
+              }}
             />
           </View>
         </>
@@ -268,7 +353,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: spacing.l,
   },
-  sheetGrid: {
+  collapseGrid: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -276,8 +361,32 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingBottom: spacing.l,
   },
-  metricColumn: {
+  expandContent: {
+    width: '100%',
+    gap: 10,
+    paddingBottom: spacing.l,
+  },
+  expandGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
+  },
+  expandButtons: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: spacing.s,
+  },
+  collapseMetricColumn: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.s,
+    paddingVertical: spacing.m,
+    gap: spacing['3xs'],
+  },
+  expandMetricColumn: {
+    width: '50%',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.s,

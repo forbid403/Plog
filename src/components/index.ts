@@ -38,3 +38,7 @@ export { default as XCircleIcon } from './icons/XCircleIcon';
 export type { XCircleIconProps } from './icons/XCircleIcon';
 export { default as PauseIcon } from './icons/PauseIcon';
 export type { PauseIconProps } from './icons/PauseIcon';
+export { default as PlayIcon } from './icons/PlayIcon';
+export type { PlayIconProps } from './icons/PlayIcon';
+export { default as FlagCheckeredIcon } from './icons/FlagCheckeredIcon';
+export type { FlagCheckeredIconProps } from './icons/FlagCheckeredIcon';
