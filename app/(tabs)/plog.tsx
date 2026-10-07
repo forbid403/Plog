@@ -68,17 +68,21 @@ export default function PlogScreen() {
         initialRegion={FALLBACK_REGION}
         showsUserLocation
         showsMyLocationButton={false}
+        zoomEnabled
+        zoomTapEnabled
         onPanDrag={() => setFollowing(false)}
       />
 
-      {!following && (
-        <CircleIconButton
-          accessibilityLabel="Re-centre on my location"
-          onPress={recentre}
-          icon={({ color, size }) => <LocateIcon color={color} size={size} />}
-          style={[styles.recentreButton, { top: insets.top + spacing.s }]}
-        />
-      )}
+      {/* Spec (C2) says show this only after panning [Recommended, not
+          Confirmed] — always-visible is the more discoverable, more common
+          pattern (Google/Apple Maps etc.) and matches direct testing
+          feedback that the conditional version was easy to miss. */}
+      <CircleIconButton
+        accessibilityLabel="Re-centre on my location"
+        onPress={recentre}
+        icon={({ color, size }) => <LocateIcon color={color} size={size} />}
+        style={[styles.recentreButton, { top: insets.top + spacing.s }]}
+      />
 
       {/* No Figma reference for this screen's exact layout — bottom offset is
           sized to clear the floating BottomNavigation (~82px tall incl. its
