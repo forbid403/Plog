@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../src/components/Button';
 import ButtonRound from '../../src/components/ButtonRound';
 import CircleIconButton from '../../src/components/CircleIconButton';
+import CaretDownIcon from '../../src/components/icons/CaretDownIcon';
 import LocateIcon from '../../src/components/icons/LocateIcon';
+import PauseIcon from '../../src/components/icons/PauseIcon';
 import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { shadowLayerToStyle } from '../../src/lib/shadow';
@@ -28,6 +30,8 @@ const POINTS_POLL_INTERVAL_MS = 2000;
 // look (shared with TopBar's back/menu buttons, which sit over a flat
 // header bg, not a map).
 const recentreShadowStyle = shadowLayerToStyle(shadows.normal[1]);
+// Figma: Shadow_Emphasize on the status pill (Plog Design, node 681:2047).
+const statusPillShadowStyle = shadowLayerToStyle(shadows.emphasize[0]);
 
 // Sydney — reasonable fallback center before the first GPS fix arrives.
 const FALLBACK_REGION = {
@@ -49,6 +53,11 @@ function toRoutePoint(row: PlogPointRow): RoutePoint {
  * Tab bar hiding while recording (spec 0.3) is handled by
  * app/(tabs)/_layout.tsx reading this same status, not by leaving this
  * route group.
+ *
+ * Recording UI matches Figma (Plog Design, node 681:2047 "Track - On
+ * going") — a bottom sheet with Time/Pause/Distance, not the floating
+ * pills an earlier version had before that reference existed. Idle UI has
+ * no Figma reference, unchanged from before.
  */
 export default function PlogScreen() {
   const insets = useSafeAreaInsets();
@@ -121,56 +130,83 @@ export default function PlogScreen() {
         {recording && points.length > 1 && (
           <Polyline
             coordinates={points.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
-            strokeColor={colors.brand.primary['500']}
+            strokeColor={colors.blue['500']}
             strokeWidth={4}
           />
         )}
       </MapView>
 
-      {/* Top area: status pill while recording, time/distance flank it so
-          nothing here ever collides with the re-centre button or the main
-          action button below — both of those stay put regardless of state. */}
-      {recording && (
-        <View style={[styles.topBar, { top: insets.top + spacing.s }]}>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{formatDuration(elapsedSec)}</Text>
+      {recording ? (
+        <>
+          {/* Figma doesn't document what this does (no "Expand" state was
+              given, just this "Collapse" one) — wired to re-centre as the
+              most useful existing action, not a guessed new feature. */}
+          <CircleIconButton
+            accessibilityLabel="Collapse"
+            onPress={recentre}
+            icon={({ size }) => <CaretDownIcon color={colors.brand.primary['700']} size={size} />}
+            style={[styles.collapseButton, { top: insets.top + spacing.s }]}
+          />
+
+          <View style={[styles.statusPill, statusPillShadowStyle, { top: insets.top + spacing.s }]}>
+            {/* Figma only shows the happy path ("session on track") — spec
+                C3 also defines a "Weak GPS signal" state [Proposed], kept
+                from the earlier implementation rather than dropped. */}
+            <Text style={styles.statusPillText}>{gpsOk ? 'session on track' : 'Weak GPS signal'}</Text>
           </View>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{gpsOk ? 'Session on track' : 'Weak GPS signal'}</Text>
+
+          <View style={[styles.sheet, { paddingBottom: insets.bottom || spacing.m }]}>
+            <View style={styles.handle} />
+            <View style={styles.sheetGrid}>
+              <View style={styles.metricColumn}>
+                <Text style={styles.metricValue}>{formatDuration(elapsedSec)}</Text>
+                <Text style={styles.metricLabel}>Time</Text>
+              </View>
+
+              <ButtonRound
+                size="big"
+                variant="fill"
+                tone="secondary"
+                icon={({ color, size }) => <PauseIcon color={color} size={size} />}
+                onPress={pause}
+                accessibilityLabel="Pause"
+              />
+
+              <View style={styles.metricColumn}>
+                <Text style={styles.metricValue}>{formatDistanceKm(distanceKm, 2)}</Text>
+                <Text style={styles.metricLabel}>Distance (km)</Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{formatDistanceKm(distanceKm, 2)} km</Text>
+        </>
+      ) : (
+        <>
+          {/* Spec (C2) says show this only after panning [Recommended, not
+              Confirmed] — always-visible is the more discoverable, more
+              common pattern (Google/Apple Maps etc.) and matches direct
+              testing feedback that the conditional version was easy to miss. */}
+          <CircleIconButton
+            accessibilityLabel="Re-centre on my location"
+            onPress={recentre}
+            icon={({ color, size }) => <LocateIcon color={color} size={size} />}
+            style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
+          />
+
+          {/* No Figma reference for the idle screen's exact layout — bottom
+              offset clears the floating BottomNavigation (~82px tall incl.
+              its own gap), not a spec'd number. */}
+          <View style={[styles.startButtonWrapper, { bottom: insets.bottom + 82 + spacing.l }]}>
+            <ButtonRound
+              size="display"
+              variant="fill"
+              label={gpsReady ? 'Start' : 'Finding GPS…'}
+              icon={null}
+              disabled={!gpsReady}
+              onPress={start}
+            />
           </View>
-        </View>
+        </>
       )}
-
-      {/* Spec (C2) says show this only after panning [Recommended, not
-          Confirmed] — always-visible is the more discoverable, more common
-          pattern (Google/Apple Maps etc.) and matches direct testing
-          feedback that the conditional version was easy to miss. Stays up
-          while recording too — it's "where am I", not an idle-only control. */}
-      <CircleIconButton
-        accessibilityLabel="Re-centre on my location"
-        onPress={recentre}
-        icon={({ color, size }) => <LocateIcon color={color} size={size} />}
-        style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
-      />
-
-      {/* One button, same spot, in both states — only its color/label/action
-          change (tone/label swap below), not its position (no Figma
-          reference for this screen's exact layout; the bottom offset clears
-          the floating BottomNavigation, ~82px tall incl. its own gap). */}
-      <View style={[styles.actionButtonWrapper, { bottom: insets.bottom + 82 + spacing.l }]}>
-        <ButtonRound
-          size="display"
-          variant="fill"
-          tone={recording ? 'secondary' : 'primary'}
-          label={recording ? 'Pause' : gpsReady ? 'Start' : 'Finding GPS…'}
-          icon={null}
-          disabled={!recording && !gpsReady}
-          onPress={recording ? pause : start}
-        />
-      </View>
     </View>
   );
 }
@@ -185,30 +221,84 @@ const styles = StyleSheet.create({
     backgroundColor: colors.base.white,
     borderColor: colors.base.white,
   },
-  actionButtonWrapper: {
+  startButtonWrapper: {
     position: 'absolute',
     alignSelf: 'center',
   },
-  topBar: {
+  collapseButton: {
     position: 'absolute',
-    left: spacing.l,
-    right: spacing.l,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    left: spacing['2xl'],
+    backgroundColor: colors.brand.primary['50'],
+    borderColor: colors.brand.primary['50'],
   },
-  pill: {
-    backgroundColor: colors.base.white,
+  statusPill: {
+    position: 'absolute',
+    alignSelf: 'center',
+    backgroundColor: colors.brand.primary['300'],
+    borderWidth: 1,
+    borderColor: colors.brand.primary['100'],
     borderRadius: spacing.full,
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.s,
   },
-  pillText: {
-    fontFamily: typography.label.default.fontFamily,
-    fontWeight: typography.label.default.fontWeight,
-    fontSize: typography.label.default.fontSize,
-    letterSpacing: typography.label.default.letterSpacing,
-    color: colors.greyScale['900'],
+  statusPillText: {
+    fontFamily: typography.body.base.fontFamily,
+    fontWeight: typography.body.base.fontWeight,
+    fontSize: typography.body.base.fontSize,
+    letterSpacing: typography.body.base.letterSpacing,
+    color: colors.greyScale['800'],
+    textAlign: 'center',
+  },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    backgroundColor: colors.greyScale['50'],
+    borderTopLeftRadius: spacing.xl,
+    borderTopRightRadius: spacing.xl,
+    paddingHorizontal: spacing.l,
+  },
+  handle: {
+    width: 90,
+    height: 4,
+    borderRadius: spacing.xs,
+    backgroundColor: colors.greyScale['400'],
+    marginTop: 10,
+    marginBottom: spacing.l,
+  },
+  sheetGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 10,
+    paddingBottom: spacing.l,
+  },
+  metricColumn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.s,
+    paddingVertical: spacing.m,
+    gap: spacing['3xs'],
+  },
+  metricValue: {
+    fontFamily: typography.titles.display.fontFamily,
+    fontWeight: typography.titles.display.fontWeight,
+    fontSize: typography.titles.display.fontSize,
+    lineHeight: typography.titles.display.lineHeight,
+    color: colors.base.black,
+    textAlign: 'center',
+  },
+  metricLabel: {
+    fontFamily: typography.body.small.fontFamily,
+    fontWeight: typography.body.small.fontWeight,
+    fontSize: typography.body.small.fontSize,
+    letterSpacing: typography.body.small.letterSpacing,
+    color: colors.base.black,
+    textAlign: 'center',
   },
   permissionContainer: {
     flex: 1,

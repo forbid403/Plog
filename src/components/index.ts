@@ -36,3 +36,5 @@ export { default as MagnifyingGlassIcon } from './icons/MagnifyingGlassIcon';
 export type { MagnifyingGlassIconProps } from './icons/MagnifyingGlassIcon';
 export { default as XCircleIcon } from './icons/XCircleIcon';
 export type { XCircleIconProps } from './icons/XCircleIcon';
+export { default as PauseIcon } from './icons/PauseIcon';
+export type { PauseIconProps } from './icons/PauseIcon';

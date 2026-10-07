@@ -56,7 +56,11 @@ function resolveColors(variant: ButtonRoundVariant, tone: ButtonRoundTone, disab
     return { background: colors.opacity.white50, icon: colors.greyScale['600'] };
   }
   const brand = colors.brand[tone];
-  return { background: brand['500'], icon: brand['700'] };
+  // 'primary' at .500 is Figma-verified (node 104:51's Active fill).
+  // 'secondary' was originally guessed at .500 by analogy — corrected to
+  // .300 once a real reference turned up (Plog Design node 681:2047's
+  // Pause button, bg literally #ffe600 = secondary.300).
+  return { background: tone === 'secondary' ? brand['300'] : brand['500'], icon: brand['700'] };
 }
 
 /**
