@@ -88,7 +88,15 @@ export function usePlogSession(): UsePlogSessionResult {
     await insertPlogSession(db, id, startedAt);
     setRow({ id, status: 'recording', started_at: startedAt, paused_at: null, paused_duration_sec: 0 });
     setNow(new Date());
-    await startBackgroundLocationTracking();
+    try {
+      await startBackgroundLocationTracking();
+    } catch (e) {
+      // Don't let a tracking failure block the state transition/navigation
+      // — recording should still proceed (foreground-only, same fallback
+      // as a denied background permission) rather than silently stranding
+      // the caller on the idle screen.
+      console.error('[plog] failed to start background location tracking:', e);
+    }
   }, [db]);
 
   const pause = useCallback(async () => {
