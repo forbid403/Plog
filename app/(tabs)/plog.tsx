@@ -14,9 +14,11 @@ import PlayIcon from '../../src/components/icons/PlayIcon';
 import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { shadowLayerToStyle } from '../../src/lib/shadow';
-import { formatDistanceKm, formatDuration } from '../../src/lib/format';
+import { formatDistanceKm, formatDuration, formatPace } from '../../src/lib/format';
 import { getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
 import { computeDistanceKm, type RoutePoint } from '../../src/lib/plogSessionDistance';
+import { computeElevationGainM } from '../../src/lib/plogSessionElevation';
+import { computeAvgPaceSecPerKm } from '../../src/lib/plogSessionTime';
 import { colors, shadows, spacing, typography } from '../../src/theme';
 
 // [Proposed] — spec (C2) says "until accuracy is acceptable" without a
@@ -51,7 +53,7 @@ const FALLBACK_REGION = {
 };
 
 function toRoutePoint(row: PlogPointRow): RoutePoint {
-  return { lat: row.lat, lng: row.lng, accuracy: row.accuracy, isPaused: row.is_paused === 1 };
+  return { lat: row.lat, lng: row.lng, alt: row.alt, accuracy: row.accuracy, isPaused: row.is_paused === 1 };
 }
 
 /**
@@ -150,13 +152,12 @@ export default function PlogScreen() {
   const accuracy = location?.coords.accuracy ?? null;
   const gpsReady = accuracy !== null && accuracy <= ACCEPTABLE_ACCURACY_M;
   const gpsOk = accuracy !== null && accuracy <= WEAK_SIGNAL_ACCURACY_M;
-  const distanceKm = computeDistanceKm(points.map(toRoutePoint));
+  const routePoints = points.map(toRoutePoint);
+  const distanceKm = computeDistanceKm(routePoints);
   const distanceText = formatDistanceKm(distanceKm, 2);
-  // C5's elevation gain / avg pace calculations aren't built yet — shown as
-  // 0 for now (same as distance before computeDistanceKm existed), not
-  // silently omitted, so the expand layout matches Figma's grid shape.
-  const elevGainText = '0';
-  const paceText = '0:00';
+  const elevGainText = String(computeElevationGainM(routePoints));
+  // Spec doesn't define pace before any distance exists — 0′00″ until then.
+  const paceText = formatPace(computeAvgPaceSecPerKm(elapsedSec, distanceKm) ?? 0);
 
   return (
     <View style={styles.container}>

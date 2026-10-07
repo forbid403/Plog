@@ -78,7 +78,7 @@ leaving the route group.
       green). `tone="secondary"` for this one
 - [x] `src/lib/plogSessionDistance.ts` (+test): the distance slice of C5
       only (haversine sum, excludes >30m-accuracy and paused points, unit
-      tested) — pace/elevation/place name/title still not built
+      tested). Rest of C5 now built too — see C5 below
 
 ### C3.1 Background location — done
 
@@ -138,14 +138,22 @@ leaving the route group.
 `src/lib/` — pure functions, unit test boundaries (0, exactly-at-minimum,
 noise thresholds):
 
-- [ ] Distance: sum consecutive GPS points, excluding points with error
-      >30m and paused periods
-- [ ] Time: elapsed excluding manual pauses only
-- [ ] Avg pace: time ÷ distance
-- [ ] Elevation gain: sum of positive altitude changes, <3m ignored as
-      noise
-- [ ] Title generation (G4.4 — shared rule, check if Home side already
-      built this before duplicating)
+- [x] Distance: sum consecutive GPS points, excluding points with error
+      >30m and paused periods (`plogSessionDistance.ts`; that exclusion
+      rule is exported as `isUsablePoint` and shared by elevation)
+- [x] Time: elapsed excluding manual pauses only (`plogSessionTime.ts`)
+- [x] Avg pace: time ÷ distance — `computeAvgPaceSecPerKm` (null at 0 km)
+      + `formatPace` (`m′ss″`, `format.ts`)
+- [x] Elevation gain: sum of positive altitude changes, <3m ignored as
+      noise (`plogSessionElevation.ts`). Measured against the last
+      *accepted* altitude, so a slow 1m-per-point climb still counts once
+      it reaches 3m
+- [x] Wired into the recording screen's expanded sheet (elev. gain, avg
+      pace). Pace before any distance shows `0′00″` — **spec doesn't
+      define this**, our own placeholder
+- [ ] Title generation (G4.4) — server-side at save per claude.md, so
+      build with C6, not here. Place name (reverse geocode) is likewise
+      server-side, see Backend gaps
 
 ## C6. Session save
 

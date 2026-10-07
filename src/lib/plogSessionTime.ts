@@ -23,3 +23,8 @@ export function computeActiveElapsedSec({ startedAt, pausedDurationSec, pausedAt
 export function computePauseDurationSec(pausedAt: string, resumedAt: Date): number {
   return Math.max(0, Math.round((resumedAt.getTime() - new Date(pausedAt).getTime()) / 1000));
 }
+
+/** Avg. pace (C5): time ÷ distance, seconds per km. Null with no distance yet — pace is undefined. */
+export function computeAvgPaceSecPerKm(durationSec: number, distanceKm: number): number | null {
+  return distanceKm > 0 ? durationSec / distanceKm : null;
+}

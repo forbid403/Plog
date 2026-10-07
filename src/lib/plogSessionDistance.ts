@@ -1,13 +1,13 @@
 /**
  * Distance calculation (C5): "Sum of distances between consecutive GPS
  * points, excluding low-accuracy points (error > 30m) and paused periods."
- * Pure/unit-tested. Only the distance piece of C5 — pace/elevation/place
- * name/title aren't built yet.
+ * Pure/unit-tested.
  */
 
 export type RoutePoint = {
   lat: number;
   lng: number;
+  alt: number | null;
   accuracy: number | null;
   isPaused: boolean;
 };
@@ -28,6 +28,11 @@ function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng:
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h));
 }
 
+/** Paused or low-accuracy points are excluded from every C5 calculation. */
+export function isUsablePoint(point: RoutePoint): boolean {
+  return !point.isPaused && point.accuracy !== null && point.accuracy <= MAX_ACCEPTABLE_ACCURACY_M;
+}
+
 /**
  * Excluded (paused or low-accuracy) points are skipped — they don't break
  * the route, the next valid point is still measured from the last valid
@@ -38,8 +43,7 @@ export function computeDistanceKm(points: RoutePoint[]): number {
   let previous: RoutePoint | null = null;
 
   for (const point of points) {
-    const usable = !point.isPaused && point.accuracy !== null && point.accuracy <= MAX_ACCEPTABLE_ACCURACY_M;
-    if (!usable) continue;
+    if (!isUsablePoint(point)) continue;
     if (previous) totalMeters += haversineMeters(previous, point);
     previous = point;
   }

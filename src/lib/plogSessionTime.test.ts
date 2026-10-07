@@ -1,4 +1,4 @@
-import { computeActiveElapsedSec, computePauseDurationSec } from './plogSessionTime';
+import { computeActiveElapsedSec, computeAvgPaceSecPerKm, computePauseDurationSec } from './plogSessionTime';
 
 describe('computeActiveElapsedSec', () => {
   it('counts straight wall-clock time when never paused', () => {
@@ -61,5 +61,15 @@ describe('computePauseDurationSec', () => {
   it('never goes negative', () => {
     const sec = computePauseDurationSec('2026-01-01T00:01:00.000Z', new Date('2026-01-01T00:00:00.000Z'));
     expect(sec).toBe(0);
+  });
+});
+
+describe('computeAvgPaceSecPerKm', () => {
+  it('is time ÷ distance', () => {
+    expect(computeAvgPaceSecPerKm(2400, 4)).toBe(600);
+  });
+
+  it('is null with no distance', () => {
+    expect(computeAvgPaceSecPerKm(60, 0)).toBeNull();
   });
 });

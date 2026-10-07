@@ -1,4 +1,4 @@
-import { formatDistanceKm, formatDuration } from './format';
+import { formatDistanceKm, formatDuration, formatPace } from './format';
 
 describe('formatDuration', () => {
   it('formats under a minute', () => expect(formatDuration(5)).toBe('0:05'));
@@ -13,4 +13,15 @@ describe('formatDistanceKm', () => {
   it('formats with 1 decimal', () => expect(formatDistanceKm(7.6, 1)).toBe('7.6'));
   it('formats with 2 decimals', () => expect(formatDistanceKm(4, 2)).toBe('4.00'));
   it('rounds', () => expect(formatDistanceKm(4.016, 2)).toBe('4.02'));
+});
+
+describe('formatPace', () => {
+  it('formats m′ss″', () => {
+    expect(formatPace(362)).toBe('6′02″');
+    expect(formatPace(600)).toBe('10′00″');
+  });
+
+  it('rounds 59.6s up to the next minute', () => {
+    expect(formatPace(59.6)).toBe('1′00″');
+  });
 });

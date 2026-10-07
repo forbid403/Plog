@@ -22,3 +22,9 @@ export function formatDuration(totalSec: number): string {
 export function formatDistanceKm(km: number, decimals: 1 | 2): string {
   return km.toFixed(decimals);
 }
+
+/** `m′ss″` per km (0.2), e.g. 362 → `6′02″`. */
+export function formatPace(secPerKm: number): string {
+  const sec = Math.max(0, Math.round(secPerKm));
+  return `${Math.floor(sec / 60)}′${String(sec % 60).padStart(2, '0')}″`;
+}

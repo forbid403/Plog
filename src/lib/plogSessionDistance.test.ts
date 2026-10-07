@@ -3,6 +3,7 @@ import { computeDistanceKm, type RoutePoint } from './plogSessionDistance';
 const point = (lat: number, lng: number, overrides: Partial<RoutePoint> = {}): RoutePoint => ({
   lat,
   lng,
+  alt: null,
   accuracy: 5,
   isPaused: false,
   ...overrides,
