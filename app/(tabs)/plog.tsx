@@ -218,6 +218,7 @@ export default function PlogScreen() {
           >
             <View
               {...dragResponder.panHandlers}
+              style={styles.handleArea}
               accessibilityRole="adjustable"
               accessibilityLabel={expanded ? 'Collapse' : 'Expand'}
             >
@@ -225,7 +226,13 @@ export default function PlogScreen() {
             </View>
 
             {expanded ? (
-              <View style={styles.expandContent}>
+              // Distinct `key`s so expand/collapse fully unmounts and
+              // remounts this subtree instead of React reusing the same
+              // host Views across fundamentally different flex layouts
+              // (width:'50%' grid vs flex:1 row) — without it, Yoga's
+              // cached layout from the old shape bled into the new one on
+              // toggle, skewing the collapsed row's column widths.
+              <View key="expand" style={styles.expandContent}>
                 <View style={styles.expandGrid}>
                   <View style={styles.expandMetricColumn}>
                     <Text style={styles.metricValue}>{formatDuration(elapsedSec)}</Text>
@@ -274,7 +281,7 @@ export default function PlogScreen() {
                 </View>
               </View>
             ) : (
-              <View style={styles.collapseGrid}>
+              <View key="collapse" style={styles.collapseGrid}>
                 <View style={styles.collapseMetricColumn}>
                   <Text style={styles.metricValue}>{formatDuration(elapsedSec)}</Text>
                   <Text style={styles.metricLabel}>Time</Text>
@@ -386,11 +393,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'center',
     backgroundColor: colors.greyScale['50'],
     borderTopLeftRadius: spacing.xl,
     borderTopRightRadius: spacing.xl,
     paddingHorizontal: spacing.l,
+  },
+  handleArea: {
+    alignSelf: 'center',
   },
   handle: {
     width: 90,
