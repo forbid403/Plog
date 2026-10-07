@@ -28,16 +28,26 @@ export type PlogSessionRow = {
 };
 
 export function getActivePlogSession(db: SQLiteDatabase): Promise<PlogSessionRow | null> {
-  return db.getFirstAsync<PlogSessionRow>('select * from plog_sessions limit 1');
+  // `order by rowid` makes this deterministic (oldest first) — belt and
+  // braces alongside insertPlogSession's own guard against duplicates.
+  return db.getFirstAsync<PlogSessionRow>('select * from plog_sessions order by rowid asc limit 1');
 }
 
+/**
+ * Enforces the "at most one row" invariant itself (delete-then-insert in
+ * one transaction) rather than trusting every caller to check first — a
+ * double-tapped Start produced 16 duplicate rows before this existed.
+ */
 export async function insertPlogSession(db: SQLiteDatabase, id: string, startedAt: string): Promise<void> {
-  await db.runAsync(
-    'insert into plog_sessions (id, status, started_at, paused_duration_sec) values (?, ?, ?, 0)',
-    id,
-    'recording',
-    startedAt
-  );
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('delete from plog_sessions');
+    await db.runAsync(
+      'insert into plog_sessions (id, status, started_at, paused_duration_sec) values (?, ?, ?, 0)',
+      id,
+      'recording',
+      startedAt
+    );
+  });
 }
 
 export async function setPlogSessionPaused(db: SQLiteDatabase, id: string, pausedAt: string): Promise<void> {

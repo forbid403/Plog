@@ -83,6 +83,7 @@ export function usePlogSession(): UsePlogSessionResult {
   }, [row?.status]);
 
   const start = useCallback(async () => {
+    if (row) return; // already recording/paused — insertPlogSession also guards this, but avoid the redundant work/calls
     const startedAt = new Date().toISOString();
     const id = localId();
     await insertPlogSession(db, id, startedAt);
@@ -97,7 +98,7 @@ export function usePlogSession(): UsePlogSessionResult {
       // the caller on the idle screen.
       console.error('[plog] failed to start background location tracking:', e);
     }
-  }, [db]);
+  }, [db, row]);
 
   const pause = useCallback(async () => {
     if (!row) return;
