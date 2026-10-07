@@ -33,15 +33,18 @@ function toRoutePoint(row: PlogPointRow): RoutePoint {
 export default function PlogSessionScreen() {
   const insets = useSafeAreaInsets();
   const db = useSQLiteContext();
-  const { status, sessionId, elapsedSec, pause } = usePlogSession();
+  const { status, hydrated, sessionId, elapsedSec, pause } = usePlogSession();
   const { location } = useCurrentLocation();
   const mapRef = useRef<MapView>(null);
   const [points, setPoints] = useState<PlogPointRow[]>([]);
 
-  // No in-progress session (finished/discarded, or landed here directly) — bail to idle.
+  // No in-progress session (finished/discarded, or landed here directly) —
+  // bail to idle. Must wait for `hydrated`: status defaults to 'idle' until
+  // the initial DB read resolves, so checking status alone bounced every
+  // fresh navigation here straight back before it could ever render.
   useEffect(() => {
-    if (status === 'idle') router.back();
-  }, [status]);
+    if (hydrated && status === 'idle') router.back();
+  }, [hydrated, status]);
 
   useEffect(() => {
     if (!sessionId) return;

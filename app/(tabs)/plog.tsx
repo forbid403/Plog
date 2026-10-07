@@ -34,7 +34,7 @@ const FALLBACK_REGION = {
 export default function PlogScreen() {
   const insets = useSafeAreaInsets();
   const { permission, location } = useCurrentLocation();
-  const { status, start } = usePlogSession();
+  const { status, hydrated, start } = usePlogSession();
   const mapRef = useRef<MapView>(null);
   const [following, setFollowing] = useState(true);
 
@@ -42,9 +42,13 @@ export default function PlogScreen() {
   // recording/paused (e.g. the app was relaunched, or a previous Start
   // landed here without navigating away — see that bugfix), go straight to
   // it instead of showing Start and risking a second plog_sessions row.
+  // (status defaults to 'idle' pre-hydration, so this is gated the same
+  // way as plog-session.tsx's redirect — not actually dangerous in this
+  // direction, since the default is 'idle', but checking `hydrated` keeps
+  // the two screens' logic consistent rather than relying on that.)
   useEffect(() => {
-    if (status !== 'idle') router.push('/plog-session');
-  }, [status]);
+    if (hydrated && status !== 'idle') router.push('/plog-session');
+  }, [hydrated, status]);
 
   useEffect(() => {
     if (!location || !following) return;

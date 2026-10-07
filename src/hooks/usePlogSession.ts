@@ -23,6 +23,13 @@ export type PlogSessionSummary = {
 
 export type UsePlogSessionResult = {
   status: PlogSessionStatus;
+  /**
+   * False until the initial expo-sqlite read completes. `status` reads as
+   * 'idle' during that window regardless of the real persisted state — any
+   * effect that redirects/acts on `status === 'idle'` must also check this,
+   * or it'll fire on the false "idle" default before hydration finishes.
+   */
+  hydrated: boolean;
   /** Null when idle. Read GPS points for this session from plog_points (plogPointsDb.ts). */
   sessionId: string | null;
   /** Active recording time in seconds — excludes paused periods (C3), live-updates once a second while recording. */
@@ -151,6 +158,7 @@ export function usePlogSession(): UsePlogSessionResult {
 
   return {
     status: row?.status ?? 'idle',
+    hydrated,
     sessionId: row?.id ?? null,
     elapsedSec,
     start,
