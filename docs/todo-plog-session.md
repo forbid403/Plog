@@ -113,9 +113,13 @@ leaving the route group.
 - [x] `kCLErrorDomain Code=0` (`kCLErrorLocationUnknown`) downgraded from
       `console.error` to `console.warn` — Apple docs call it often-transient
       (e.g. simulator with no simulated location set yet), not fatal
-- [ ] Not yet tested: actually backgrounding the app (Cmd+Shift+H / home
-      button) mid-recording and confirming points keep arriving — so far
-      only confirmed foregrounded on the dev build
+- [x] Backgrounding the app (Cmd+Shift+H) mid-recording — confirmed on the
+      iOS Simulator dev build: `plog_points` kept growing every ~2s while
+      backgrounded (79→107 over ~60s), fresh timestamps, `is_paused=0`.
+      Checked by polling the SQLite file directly, not by screenshot (can't
+      screenshot a backgrounded app anyway)
+  - [ ] Still not done: Android (foreground service), and a real device —
+        simulator-only so far
   - [ ] Route testing: iOS Simulator location simulation (City Run) / GPX
         playback in Android emulator
 - [ ] If background permission is denied, `start()` logs a warning and
