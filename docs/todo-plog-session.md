@@ -51,15 +51,46 @@ guess, not pixel-matched — revisit once/if a Figma node exists for it.
 the state machine work, with a Discard button to get back out. Gets
 replaced by the real C3 screen below.
 
-## C3. Recording screen
+## C3. Recording screen — UI done (`app/plog-session.tsx`), foreground-only
 
-- [ ] Status pill, top centre: `session on track` / `Weak GPS signal`
-      [Proposed]
-- [ ] Live route line drawn as points come in
-- [ ] Elapsed time (bottom left, excludes pauses), distance (bottom right,
-      2 decimals)
-- [ ] Pause button (round, yellow) — `ButtonRound variant="fill"`
-- [ ] Background location (C3.1):
+- [x] Status pill, top centre: `Session on track` / `Weak GPS signal` —
+      threshold reused from C5's own 30m low-accuracy cutoff (C3 itself
+      doesn't give a number)
+- [x] Live route line drawn as points come in — `react-native-maps`
+      `Polyline`
+- [x] Elapsed time + distance (2 decimals) — `src/lib/format.ts`
+      (`formatDuration`/`formatDistanceKm`, spec 0.2, unit tested), laid
+      out either side of the Pause button rather than strictly
+      bottom-left/bottom-right corners (no Figma reference for this
+      screen either)
+- [x] Pause button (round, yellow) — extended `ButtonRound` with a `tone`
+      prop (`'primary' | 'secondary'`; Figma's component only defines
+      green). `tone="secondary"` for this one
+- [x] `src/lib/plogSessionDistance.ts` (+test): the distance slice of C5
+      only (haversine sum, excludes >30m-accuracy and paused points, unit
+      tested) — pace/elevation/place name/title still not built
+- [ ] Background location (C3.1) — **not done, current points are
+      foreground-only via `watchPositionAsync` in the screen itself, not
+      `useCurrentLocation`** (that hook's single-`location` value isn't
+      right for accumulating a route — see the screen's own subscription).
+      So right now: recording does NOT survive backgrounding or an app
+      kill, only status/timing does (that part's in expo-sqlite already).
+  - [ ] `expo-location.startLocationUpdatesAsync` — `BestForNavigation`,
+        `distanceInterval: 5`, `activityType: Fitness`
+  - [ ] iOS `showsBackgroundLocationIndicator: true`; Android foreground
+        service notification (`Plog is recording your session`) — and
+        the matching `NSLocationAlwaysAndWhenInUseUsageDescription` /
+        Android background permission in `app.json` (deliberately left
+        out until this lands, see C2's commit)
+  - [ ] Background task writes points straight to `expo-sqlite`; the
+        screen only *reads* from the DB (enables kill-and-resume recovery)
+  - [ ] Mark points received while paused as `paused`, excluded from C5
+        calculations
+  - [ ] `stopLocationUpdatesAsync` on finish or Discard
+  - [ ] ⚠️ Background location doesn't work in Expo Go — needs a dev build
+        (`npx expo run:ios` / EAS dev build) to test
+  - [ ] Route testing: iOS Simulator location simulation (City Run) / GPX
+        playback in Android emulator
   - [ ] `expo-location.startLocationUpdatesAsync` — `BestForNavigation`,
         `distanceInterval: 5`, `activityType: Fitness`
   - [ ] iOS `showsBackgroundLocationIndicator: true`; Android foreground

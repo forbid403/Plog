@@ -6,11 +6,16 @@ import { shadowLayerToStyle } from '../lib/shadow';
 
 export type ButtonRoundSize = 'small' | 'medium' | 'big' | 'display';
 export type ButtonRoundVariant = 'fill' | 'glass';
+/** 'fill' variant's color family — Figma's Button/Round only defines 'primary' (green);
+ * 'secondary' (yellow) is needed for the Pause button (spec C3), same bg/icon shade
+ * pattern (500/700) applied to Brand/Secondary instead of Brand/Primary. */
+export type ButtonRoundTone = 'primary' | 'secondary';
 export type ButtonRoundRenderIconProps = { color: string; size: number };
 
 export type ButtonRoundProps = {
   size?: ButtonRoundSize;
   variant?: ButtonRoundVariant;
+  tone?: ButtonRoundTone;
   disabled?: boolean;
   /** Defaults to CaretDownIcon (Figma's own default). Pass `null` to render no icon. */
   icon?: ((props: ButtonRoundRenderIconProps) => React.ReactNode) | null;
@@ -41,7 +46,7 @@ const SIZES: Record<ButtonRoundSize, { container: number; iconSize: number; typo
 // BottomNavigation/Button (see claude.md "Known token gap").
 const glassShadowStyle = shadowLayerToStyle(shadows.normal[1]);
 
-function resolveColors(variant: ButtonRoundVariant, disabled: boolean) {
+function resolveColors(variant: ButtonRoundVariant, tone: ButtonRoundTone, disabled: boolean) {
   if (disabled) {
     return { background: colors.greyScale['200'], icon: colors.greyScale['400'] };
   }
@@ -50,7 +55,8 @@ function resolveColors(variant: ButtonRoundVariant, disabled: boolean) {
     // using greyScale.600 instead, matching CircleIconButton's glass icon color.
     return { background: colors.opacity.white50, icon: colors.greyScale['600'] };
   }
-  return { background: colors.brand.primary['500'], icon: colors.brand.primary['700'] };
+  const brand = colors.brand[tone];
+  return { background: brand['500'], icon: brand['700'] };
 }
 
 /**
@@ -61,6 +67,7 @@ function resolveColors(variant: ButtonRoundVariant, disabled: boolean) {
 export default function ButtonRound({
   size = 'display',
   variant = 'fill',
+  tone = 'primary',
   disabled = false,
   icon,
   label,
@@ -69,7 +76,7 @@ export default function ButtonRound({
   style,
 }: ButtonRoundProps) {
   const dims = SIZES[size];
-  const palette = resolveColors(variant, disabled);
+  const palette = resolveColors(variant, tone, disabled);
   const renderIcon = icon === null ? null : (icon ?? ((p: ButtonRoundRenderIconProps) => <CaretDownIcon {...p} />));
 
   const content = (

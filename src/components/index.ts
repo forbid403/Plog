@@ -23,7 +23,7 @@ export type { ChipProps } from './Chip';
 export { default as Button } from './Button';
 export type { ButtonProps, ButtonSize, ButtonVariant, ButtonRenderIconProps } from './Button';
 export { default as ButtonRound } from './ButtonRound';
-export type { ButtonRoundProps, ButtonRoundSize, ButtonRoundVariant, ButtonRoundRenderIconProps } from './ButtonRound';
+export type { ButtonRoundProps, ButtonRoundSize, ButtonRoundVariant, ButtonRoundTone, ButtonRoundRenderIconProps } from './ButtonRound';
 export { default as CaretDownIcon } from './icons/CaretDownIcon';
 export type { CaretDownIconProps } from './icons/CaretDownIcon';
 export { default as Avatar } from './Avatar';
