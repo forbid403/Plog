@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { startBackgroundLocationTracking, stopBackgroundLocationTracking } from '../lib/backgroundLocationTask';
 import { deletePointsForSession } from '../lib/plogPointsDb';
 import {
@@ -56,21 +56,8 @@ function localId(): string {
   return id;
 }
 
-/**
- * Drives the C1 state flow (idle → recording ⇄ paused) and persists it to
- * expo-sqlite so an in-progress session survives the app being killed
- * (C3.1 recovery — on mount, this hook hydrates from whatever's in the DB).
- *
- * Also owns the background location task's lifecycle (C3.1): start() turns
- * it on, finish()/discard() turn it off — pause()/resume() deliberately
- * don't touch it, the task keeps running and just marks points `is_paused`
- * based on this hook's own status (see backgroundLocationTask.ts).
- *
- * GPS points themselves live in plog_points (plogPointsDb.ts), read via
- * `sessionId` — not returned from this hook directly. The server save (C6)
- * is still separate, not built yet.
- */
-export function usePlogSession(): UsePlogSessionResult {
+/** The actual implementation — only ever instantiated once, by PlogSessionProvider below. */
+function usePlogSessionState(): UsePlogSessionResult {
   const db = useSQLiteContext();
   const [row, setRow] = useState<PlogSessionRow | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -167,4 +154,40 @@ export function usePlogSession(): UsePlogSessionResult {
     finish,
     discard,
   };
+}
+
+const PlogSessionContext = createContext<UsePlogSessionResult | null>(null);
+
+/**
+ * Drives the C1 state flow (idle → recording ⇄ paused) and persists it to
+ * expo-sqlite so an in-progress session survives the app being killed
+ * (C3.1 recovery — on mount, this hydrates from whatever's in the DB).
+ *
+ * This is a Context provider, not a plain hook each caller instantiates
+ * independently — it must be, so that e.g. the Plog screen and the tab bar
+ * (app/(tabs)/_layout.tsx, hiding itself while recording) see the exact
+ * same live status. Two independent `useState`-based instances looked
+ * identical at first (both read the same DB row on their own mount) but
+ * diverged the moment either one changed status, since neither could ever
+ * see the other's update — found when the tab bar silently stayed visible
+ * through an entire recording because it only ever hydrated once at mount.
+ *
+ * Also owns the background location task's lifecycle (C3.1): start() turns
+ * it on, finish()/discard() turn it off — pause()/resume() deliberately
+ * don't touch it, the task keeps running and just marks points `is_paused`
+ * based on this hook's own status (see backgroundLocationTask.ts).
+ *
+ * GPS points themselves live in plog_points (plogPointsDb.ts), read via
+ * `sessionId` — not returned from this hook directly. The server save (C6)
+ * is still separate, not built yet.
+ */
+export function PlogSessionProvider({ children }: { children: ReactNode }) {
+  const value = usePlogSessionState();
+  return <PlogSessionContext.Provider value={value}>{children}</PlogSessionContext.Provider>;
+}
+
+export function usePlogSession(): UsePlogSessionResult {
+  const ctx = useContext(PlogSessionContext);
+  if (!ctx) throw new Error('usePlogSession() must be used within <PlogSessionProvider> (see app/_layout.tsx)');
+  return ctx;
 }
