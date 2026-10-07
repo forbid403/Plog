@@ -9,11 +9,18 @@ import CircleIconButton from '../../src/components/CircleIconButton';
 import LocateIcon from '../../src/components/icons/LocateIcon';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
-import { colors, spacing, typography } from '../../src/theme';
+import { colors, shadows, spacing, typography } from '../../src/theme';
+import { shadowLayerToStyle } from '../../src/lib/shadow';
 
 // [Proposed] — spec (C2) says "until accuracy is acceptable" without a
 // number; 20m horizontal accuracy is our own threshold, not Figma/spec.
 const ACCEPTABLE_ACCURACY_M = 20;
+
+// The re-centre button needs to read clearly over a busy map, so it's solid
+// white + a real shadow here instead of CircleIconButton's default "glass"
+// look (shared with TopBar's back/menu buttons, which sit over a flat
+// header bg, not a map).
+const recentreShadowStyle = shadowLayerToStyle(shadows.normal[1]);
 
 // Sydney — reasonable fallback center before the first GPS fix arrives.
 const FALLBACK_REGION = {
@@ -81,7 +88,7 @@ export default function PlogScreen() {
         accessibilityLabel="Re-centre on my location"
         onPress={recentre}
         icon={({ color, size }) => <LocateIcon color={color} size={size} />}
-        style={[styles.recentreButton, { bottom: insets.bottom + 82 + spacing.l }]}
+        style={[styles.recentreButton, recentreShadowStyle, { bottom: insets.bottom + 82 + spacing.l }]}
       />
 
       {/* No Figma reference for this screen's exact layout — bottom offset is
@@ -108,6 +115,8 @@ const styles = StyleSheet.create({
   recentreButton: {
     position: 'absolute',
     right: spacing.l,
+    backgroundColor: colors.base.white,
+    borderColor: colors.base.white,
   },
   startButtonWrapper: {
     position: 'absolute',
