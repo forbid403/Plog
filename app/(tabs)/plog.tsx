@@ -1,6 +1,6 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useRef, useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Linking, PanResponder, StyleSheet, Text, View } from 'react-native';
 import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../src/components/Button';
@@ -35,6 +35,13 @@ const recentreShadowStyle = shadowLayerToStyle(shadows.normal[1]);
 // Figma: Shadow_Emphasize on the status pill (Plog Design, node 681:2047).
 const statusPillShadowStyle = shadowLayerToStyle(shadows.emphasize[0]);
 
+// No Figma reference for this element while recording (117:518's sheet
+// frames don't include it) — clears the collapsed sheet's approximate
+// height (handle + button row + padding), not a spec'd number. Doesn't
+// track the sheet's expanded height; expanding covers it, same tradeoff
+// the idle screen's own approximated offset already makes.
+const RECORDING_RECENTRE_BOTTOM = 150;
+
 // Sydney — reasonable fallback center before the first GPS fix arrives.
 const FALLBACK_REGION = {
   latitude: -33.8688,
@@ -64,7 +71,7 @@ export default function PlogScreen() {
   const insets = useSafeAreaInsets();
   const db = useSQLiteContext();
   const { permission, location } = useCurrentLocation();
-  const { status, sessionId, elapsedSec, start, pause, resume } = usePlogSession();
+  const { status, sessionId, elapsedSec, start, pause, resume, discard } = usePlogSession();
   const mapRef = useRef<MapView>(null);
   const [following, setFollowing] = useState(true);
   const [points, setPoints] = useState<PlogPointRow[]>([]);
@@ -102,7 +109,33 @@ export default function PlogScreen() {
   }, [db, sessionId]);
 
   const recentre = () => setFollowing(true);
-  const toggleExpanded = () => setExpanded((current) => !current);
+
+  // Back button (confirmed directly, not from Figma's export): same discard
+  // flow as C4's "Discard this session" — same confirmation copy, same
+  // destructive action, since this screen doesn't have its own finish sheet
+  // built yet (C4).
+  const confirmBack = () => {
+    Alert.alert('Discard this session?', "This can't be undone.", [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Discard', style: 'destructive', onPress: () => discard() },
+    ]);
+  };
+
+  // Figma (node 117:518): expand/collapse is a drag on the sheet's own
+  // "Drag Area" handle, not a tap — swipe the handle up to expand, down to
+  // collapse. 20px is an unspec'd threshold, same kind of approximation as
+  // this screen's other unnumbered gesture/accuracy constants.
+  const dragResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 5,
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dy < -20) setExpanded(true);
+          else if (gesture.dy > 20) setExpanded(false);
+        },
+      }),
+    []
+  );
 
   if (permission === 'denied') {
     return (
@@ -148,15 +181,24 @@ export default function PlogScreen() {
 
       {recording ? (
         <>
-          {/* Figma doesn't literally say this toggles the sheet, but the
-              sheet's own "Drag Area" is a <button> in Figma's export too
-              (not just draggable) — both this and the handle below do the
-              same expand/collapse toggle. */}
           <CircleIconButton
-            accessibilityLabel={expanded ? 'Collapse' : 'Expand'}
-            onPress={toggleExpanded}
+            accessibilityLabel="Back"
+            onPress={confirmBack}
             icon={({ size }) => <CaretDownIcon color={colors.brand.primary['700']} size={size} />}
             style={[styles.collapseButton, { top: insets.top + spacing.s }]}
+          />
+
+          {/* C2's "re-centre on my location" button (idle screen) applies
+              here too — kept visible while recording, above the sheet. */}
+          <CircleIconButton
+            accessibilityLabel="Re-centre on my location"
+            onPress={recentre}
+            icon={({ color, size }) => <LocateIcon color={color} size={size} />}
+            style={[
+              styles.recentreButton,
+              recentreShadowStyle,
+              { bottom: insets.bottom + RECORDING_RECENTRE_BOTTOM },
+            ]}
           />
 
           <View style={[styles.statusPill, statusPillShadowStyle, { top: insets.top + spacing.s }]}>
@@ -173,9 +215,13 @@ export default function PlogScreen() {
               paused && { backgroundColor: colors.brand.secondary['200'] },
             ]}
           >
-            <Pressable onPress={toggleExpanded} accessibilityRole="button" accessibilityLabel={expanded ? 'Collapse' : 'Expand'}>
+            <View
+              {...dragResponder.panHandlers}
+              accessibilityRole="adjustable"
+              accessibilityLabel={expanded ? 'Collapse' : 'Expand'}
+            >
               <View style={styles.handle} />
-            </Pressable>
+            </View>
 
             {expanded ? (
               <View style={styles.expandContent}>
