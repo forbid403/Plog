@@ -1,20 +1,9 @@
-import { useRef, useState } from 'react';
-import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { useState } from 'react';
+import { Animated, Image, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../src/components';
 import { colors, spacing, typography } from '../src/theme';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Figma: Plog Design, node 685:2741 ("Onboarding - 3") / 685:2750
 // ("Onboarding - 4"). Photos downloaded from those frames (image 12),
@@ -45,14 +34,15 @@ const SLIDES: Slide[] = [
 ];
 
 // The 3rd dot represents the sign-up step (app/onboarding-profile.tsx) —
-// confirmed directly: this screen's own indicator is 3 dots even though
-// only 2 pages are swipeable here, the 3rd page isn't part of this
-// horizontal pager (it has a text input + white background, not a photo
-// slide), it's reached by navigating off this screen entirely.
+// confirmed directly: there are only 2 slides here, the 3rd step is
+// reached by navigating off this screen entirely.
 const TOTAL_STEPS = 3;
+const CROSSFADE_MS = 280;
 
 /**
- * A1-A2: two full-screen onboarding slides (Figma: Plog Design, node
+ * A1-A2: one screen, not a horizontal pager — confirmed directly: the
+ * photo/title/body crossfade in place and the indicator advances, rather
+ * than the screen paging sideways (Figma: Plog Design, node
  * 685:2741/685:2750 — "Onboarding - 3/4"). No separate location-permission
  * primer (A3) — confirmed directly there isn't one in the design; location
  * permission is requested wherever it's actually needed instead (already
@@ -61,52 +51,48 @@ const TOTAL_STEPS = 3;
 export default function OnboardingSlidesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
   const [slide, setSlide] = useState(0);
+  const [opacity] = useState(() => new Animated.Value(1));
 
-  const onMomentumScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setSlide(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
-  };
-
-  const handlePress = (index: number) => {
-    if (index === SLIDES.length - 1) {
+  const handlePress = () => {
+    if (slide === SLIDES.length - 1) {
       router.push('/onboarding-profile');
       return;
     }
-    scrollRef.current?.scrollTo({ x: (index + 1) * SCREEN_WIDTH, animated: true });
-    setSlide(index + 1);
+    Animated.timing(opacity, { toValue: 0, duration: CROSSFADE_MS, useNativeDriver: true }).start(() => {
+      setSlide((current) => current + 1);
+      Animated.timing(opacity, { toValue: 1, duration: CROSSFADE_MS, useNativeDriver: true }).start();
+    });
   };
+
+  const current = SLIDES[slide];
 
   return (
     <View style={styles.container}>
-      <ScrollView ref={scrollRef} horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={onMomentumScrollEnd}>
-        {SLIDES.map((s, i) => (
-          <View key={i} style={{ width: SCREEN_WIDTH }}>
-            <Image source={s.photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
-            <View style={styles.overlay} />
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>
+        <Image source={current.photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <View style={styles.overlay} />
+      </Animated.View>
 
-            <Text style={[styles.logo, { top: insets.top + 32 }]}>Plog</Text>
+      <Text style={[styles.logo, { top: insets.top + 32 }]}>Plog</Text>
 
-            <View style={[styles.indicatorRow, { top: insets.top + 113 }]}>
-              {Array.from({ length: TOTAL_STEPS }, (_, dot) => (
-                <View key={dot} style={[styles.indicatorDot, dot === i && styles.indicatorDotActive]} />
-              ))}
-            </View>
-
-            <View style={[styles.content, { paddingBottom: insets.bottom + 54 }]}>
-              <Text style={styles.title}>{s.title}</Text>
-              <Text style={styles.body}>{s.body}</Text>
-            </View>
-          </View>
+      <View style={[styles.indicatorRow, { top: insets.top + 113 }]}>
+        {Array.from({ length: TOTAL_STEPS }, (_, dot) => (
+          <View key={dot} style={[styles.indicatorDot, dot === slide && styles.indicatorDotActive]} />
         ))}
-      </ScrollView>
+      </View>
 
-      <View style={[styles.buttonWrapper, { bottom: insets.bottom + 54 }]} pointerEvents="box-none">
+      <Animated.View style={[styles.content, { top: insets.top + 211, opacity }]}>
+        <Text style={styles.title}>{current.title}</Text>
+        <Text style={styles.body}>{current.body}</Text>
+      </Animated.View>
+
+      <View style={[styles.buttonWrapper, { bottom: insets.bottom + 54 }]}>
         <Button
-          label={SLIDES[slide].buttonLabel}
+          label={current.buttonLabel}
           size="full"
           variant={slide === SLIDES.length - 1 ? 'fill' : 'glass'}
-          onPress={() => handlePress(slide)}
+          onPress={handlePress}
         />
       </View>
     </View>
@@ -157,7 +143,6 @@ const styles = StyleSheet.create({
   content: {
     position: 'absolute',
     left: 30,
-    top: 211,
     width: 339,
     gap: 29,
   },
