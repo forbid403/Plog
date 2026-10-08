@@ -1,11 +1,14 @@
+import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BottomSheet, { type BottomSheetHandle } from '../../src/components/BottomSheet';
 import Button from '../../src/components/Button';
 import ButtonRound from '../../src/components/ButtonRound';
 import CircleIconButton from '../../src/components/CircleIconButton';
+import ArrowRightIcon from '../../src/components/icons/ArrowRightIcon';
 import CaretDownIcon from '../../src/components/icons/CaretDownIcon';
 import FlagCheckeredIcon from '../../src/components/icons/FlagCheckeredIcon';
 import LocateIcon from '../../src/components/icons/LocateIcon';
@@ -15,7 +18,8 @@ import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { shadowLayerToStyle } from '../../src/lib/shadow';
 import { formatDistanceKm, formatDuration, formatPace } from '../../src/lib/format';
-import { getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
+import { createSession } from '../../src/api/sessions';
+import { deletePointsForSession, getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
 import { computeDistanceKm, type RoutePoint } from '../../src/lib/plogSessionDistance';
 import { computeElevationGainM } from '../../src/lib/plogSessionElevation';
 import { computeAvgPaceSecPerKm } from '../../src/lib/plogSessionTime';
@@ -74,10 +78,12 @@ function toRoutePoint(row: PlogPointRow): RoutePoint {
  */
 export default function PlogScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const db = useSQLiteContext();
   const { permission, location } = useCurrentLocation();
   const { status, sessionId, elapsedSec, start, pause, resume, finish, discard } = usePlogSession();
   const mapRef = useRef<MapView>(null);
+  const finishSheetRef = useRef<BottomSheetHandle>(null);
   const [following, setFollowing] = useState(true);
   const [points, setPoints] = useState<PlogPointRow[]>([]);
   const [expanded, setExpanded] = useState(false);
@@ -115,11 +121,11 @@ export default function PlogScreen() {
 
   const recentre = () => setFollowing(true);
 
-  // Back button (confirmed directly, not from Figma's export): same discard
-  // flow as C4's "Discard this session" — same confirmation copy, same
-  // destructive action, since this screen doesn't have its own finish sheet
-  // built yet (C4).
-  const confirmBack = () => {
+  // Shared by the back button (confirmed directly, not from Figma's export
+  // — the back button isn't part of the guard sheet below) and the guard
+  // sheet's own "Discard this session" link (node 681:2058) — same copy,
+  // same destructive action either way.
+  const confirmDiscard = () => {
     Alert.alert('Discard this session?', "This can't be undone.", [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Discard', style: 'destructive', onPress: () => discard() },
@@ -158,15 +164,19 @@ export default function PlogScreen() {
   const routePoints = points.map(toRoutePoint);
   const distanceKm = computeDistanceKm(routePoints);
   const distanceText = formatDistanceKm(distanceKm, 2);
-  const elevGainText = String(computeElevationGainM(routePoints));
+  const elevGainM = computeElevationGainM(routePoints);
+  const elevGainText = String(elevGainM);
+  const avgPaceSecPerKm = computeAvgPaceSecPerKm(elapsedSec, distanceKm);
   // Spec doesn't define pace before any distance exists — 0′00″ until then.
-  const paceText = formatPace(computeAvgPaceSecPerKm(elapsedSec, distanceKm) ?? 0);
+  const paceText = formatPace(avgPaceSecPerKm ?? 0);
 
   // C4: tapping Finish on a too-short session shows the "too short" message
-  // with Resume/Discard instead of saving. Finish itself ends the session
-  // and returns to idle — it doesn't continue into Litter log (Part D
-  // isn't built yet), flagged rather than guessed at.
-  const confirmFinish = () => {
+  // with Resume/Discard instead of saving — no Figma reference for this
+  // state (unlike the guard sheet below), so it's a plain Alert rather
+  // than a guessed-at sheet layout. Otherwise opens the real "Finished
+  // your plog session?" guard sheet (Figma node 681:2058, named
+  // "Accidental-tap guard").
+  const handleFinishPress = () => {
     if (elapsedSec < MIN_SESSION_SEC || distanceKm < MIN_SESSION_KM) {
       Alert.alert('This session is too short to save.', undefined, [
         { text: 'Resume', style: 'cancel' },
@@ -174,7 +184,46 @@ export default function PlogScreen() {
       ]);
       return;
     }
-    finish();
+    finishSheetRef.current?.open();
+  };
+
+  // Guard sheet's Resume: closes the sheet and un-pauses if paused
+  // (resume() itself no-ops if not paused). Finish & Log litter: ends the
+  // session, then continues into Litter log (D) for that session.
+  const handleGuardResume = () => {
+    finishSheetRef.current?.close();
+    resume();
+  };
+  const handleGuardFinish = async () => {
+    finishSheetRef.current?.close();
+    const summary = await finish();
+    try {
+      // C6: creates the sessions row now (litter fields left null — D7's
+      // updateLitter fills those in from the Litter log screen).
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const session = await createSession({
+        startedAt: summary.startedAt,
+        endedAt: summary.endedAt,
+        timezone,
+        durationSec: summary.durationSec,
+        distanceKm,
+        elevationGainM: elevGainM,
+        avgPaceSecPerKm,
+        route: points.map((p) => ({ lat: p.lat, lng: p.lng, alt: p.alt, t: p.t })),
+      });
+      // Only cleaned up on a successful save — see usePlogSession.finish()'s
+      // own comment: C6 reads plog_points and cleans them up, not finish().
+      await deletePointsForSession(db, summary.id);
+      router.push({ pathname: '/litter-log', params: { sessionId: session.id } });
+    } catch (e) {
+      // C6's own flagged gap: "On network failure: keep locally, retry,
+      // don't block Litter log" [Proposed] isn't built — this just surfaces
+      // the failure. plog_points are deliberately left in place (not
+      // deleted) so the route data isn't lost, but there's no retry UI yet
+      // to act on that.
+      console.error('[plog] failed to save session:', e);
+      Alert.alert('Could not save your session', 'Check your connection and try again.');
+    }
   };
 
   return (
@@ -202,7 +251,7 @@ export default function PlogScreen() {
         <>
           <CircleIconButton
             accessibilityLabel="Back"
-            onPress={confirmBack}
+            onPress={confirmDiscard}
             icon={({ size }) => <CaretDownIcon color={colors.brand.primary['700']} size={size} />}
             style={[styles.collapseButton, { top: insets.top + spacing.s }]}
           />
@@ -291,7 +340,7 @@ export default function PlogScreen() {
                   <Button
                     label="Finish"
                     size="full"
-                    onPress={confirmFinish}
+                    onPress={handleFinishPress}
                     leadIcon={({ size }) => <FlagCheckeredIcon color={colors.greyScale['900']} size={size} />}
                     style={{ backgroundColor: colors.orange['500'] }}
                   />
@@ -331,6 +380,40 @@ export default function PlogScreen() {
               </View>
             )}
           </View>
+
+          {/* "Finished your plog session?" guard sheet (Figma node
+              681:2058, "Accidental-tap guard") — only reachable once the
+              session clears the minimum-length check in
+              handleFinishPress. */}
+          <BottomSheet ref={finishSheetRef}>
+            <Text style={styles.guardTitle}>Finished your plog session?</Text>
+            <View style={styles.guardGrid}>
+              <View style={styles.guardMetricColumn}>
+                <Text style={styles.guardMetricValue}>{formatDuration(elapsedSec)}</Text>
+                <Text style={styles.guardMetricLabel}>Time</Text>
+              </View>
+              <View style={styles.guardMetricColumn}>
+                <Text style={styles.guardMetricValue}>{distanceText}</Text>
+                <Text style={styles.guardMetricLabel}>Distance (km)</Text>
+              </View>
+              <View style={styles.guardMetricColumn}>
+                <Text style={styles.guardMetricValue}>{elevGainText}</Text>
+                <Text style={styles.guardMetricLabel}>Elev.gain(m)</Text>
+              </View>
+            </View>
+            <View style={styles.guardButtons}>
+              <Button label="Resume" size="medium" variant="outlined" onPress={handleGuardResume} style={styles.guardResumeButton} />
+              <Button
+                label="Finish & Log litter"
+                size="medium"
+                onPress={handleGuardFinish}
+                tailIcon={({ color, size }) => <ArrowRightIcon color={color} size={size} />}
+              />
+            </View>
+            <Pressable onPress={confirmDiscard} style={styles.guardDiscardWrapper}>
+              <Text style={styles.guardDiscardText}>Discard this session</Text>
+            </Pressable>
+          </BottomSheet>
         </>
       ) : (
         <>
@@ -495,6 +578,67 @@ const styles = StyleSheet.create({
     fontSize: typography.body.base.fontSize,
     letterSpacing: typography.body.base.letterSpacing,
     color: colors.greyScale['800'],
+    textAlign: 'center',
+  },
+  guardTitle: {
+    fontFamily: typography.titles.medium.fontFamily,
+    fontWeight: typography.titles.medium.fontWeight,
+    fontSize: typography.titles.medium.fontSize,
+    lineHeight: typography.titles.medium.lineHeight,
+    color: colors.base.black,
+    textAlign: 'center',
+    paddingTop: spacing.m,
+    marginBottom: spacing['3xl'],
+  },
+  guardGrid: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: spacing.s,
+    marginBottom: spacing.s,
+  },
+  guardMetricColumn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.s,
+    paddingVertical: spacing.m,
+    gap: spacing['3xs'],
+  },
+  guardMetricValue: {
+    fontFamily: typography.titles.medium.fontFamily,
+    fontWeight: typography.titles.medium.fontWeight,
+    fontSize: typography.titles.medium.fontSize,
+    lineHeight: typography.titles.medium.lineHeight,
+    color: colors.base.black,
+    textAlign: 'center',
+  },
+  guardMetricLabel: {
+    fontFamily: typography.body.extraSmall.fontFamily,
+    fontWeight: typography.body.extraSmall.fontWeight,
+    fontSize: typography.body.extraSmall.fontSize,
+    letterSpacing: typography.body.extraSmall.letterSpacing,
+    color: colors.base.black,
+    textAlign: 'center',
+  },
+  guardButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 10,
+  },
+  guardResumeButton: {
+    flex: 1,
+  },
+  guardDiscardWrapper: {
+    paddingTop: 10,
+    paddingHorizontal: 28,
+  },
+  guardDiscardText: {
+    fontFamily: typography.body.extraSmall.fontFamily,
+    fontWeight: typography.body.extraSmall.fontWeight,
+    fontSize: typography.body.extraSmall.fontSize,
+    letterSpacing: typography.body.extraSmall.letterSpacing,
+    color: colors.red['700'],
+    textDecorationLine: 'underline',
     textAlign: 'center',
   },
 });

@@ -179,11 +179,26 @@ noise thresholds):
 
 ## C6. Session save
 
-- [ ] `src/api/sessions.ts`: `createSession(payload)` — insert into the
-      `sessions` table (schema already matches this payload shape, see
-      `supabase/migrations/`)
+- [x] `src/api/sessions.ts`: `createSession(payload)` — called from
+      `app/(tabs)/plog.tsx`'s `handleGuardFinish` (the guard sheet's
+      "Finish & Log litter" button), right after `usePlogSession().finish()`.
+      Litter fields (D2-D5) are left null — `updateLitter` fills them in
+      from the Litter log screen. On success, `plog_points` for that
+      session are deleted (only on success — see below)
+- [x] `title` (G4.4) generated server-side: new migration
+      (`supabase/migrations/20261008003725_session_title_trigger.sql`), a
+      `BEFORE INSERT` trigger that overwrites whatever `title` the client
+      sent (client doesn't send one) using `started_at`/`timezone`.
+      Verified against the local Supabase instance: all four time-of-day
+      buckets, and a full createSession→updateLitter round-trip (RLS,
+      trigger, and the update both confirmed working)
 - [ ] On network failure: keep locally, retry, don't block Litter log
-      [Proposed]
+      [Proposed] — **not built**. `createSession` failing shows an Alert
+      and does NOT delete `plog_points` (so the route data isn't lost),
+      but there's no retry UI yet to act on that — a real gap, flagged in
+      `handleGuardFinish`'s catch block, not silently patched over
+- [ ] `getSession(id)`, `getSessionRoute(id)` — not needed yet (F isn't
+      built)
 
 ## C7. Route guide mode — later
 
@@ -193,32 +208,42 @@ noise thresholds):
 
 ---
 
-## D. Litter log
+## D. Litter log — done except D8 (edit mode)
 
-- [ ] Header: back + `Litter Log` — **`TopBar depth={2}`**
-- [ ] Q1 + stepper + quick-pick chips (`A few`/`1/4`/`1/2`/`3/4`/`Full
-      bag`), stepper and chips share one value — **`Chip`** (`selected`
-      toggle)
-- [ ] Bag illustration, fills from bottom by ratio
-- [ ] Q2 + bag size chips (`5L`/`10L`/`15L`/`20L`/`25L`) — **`Chip`**
-- [ ] Photo area: `expo-image-picker` (capture/select) +
-      `expo-image-manipulator` (resize to 2048px long edge), preview with
-      replace/remove
-- [ ] `Submit` (**`Button variant="fill"`**) / `I didn't collect any this
-      time` (**`Button variant="outlined"`**)
-- [ ] Back button → confirm dialog (`Leave without logging litter?`) →
-      leaving saves 0 L and goes Home
-- [ ] `src/lib/litter.ts`: `liters = round(ratio × bagSizeLiters, 1)` —
-      pure function, unit tested
-- [ ] Levels 1–5 only for now (level 1 `A few`=0.1, 6+ is **on hold**,
-      H1-1 D1) — implement the `+N` display logic (G4.3) ahead of time
-      even though it's unused until 6+ is decided
-- [ ] `src/api/sessions.ts`: `updateLitter(sessionId, {...})` —
-      `fillRatio`/`bagSizeLiters`/photo upload (`session-photos` bucket) →
-      updates `sessions` row
-- [ ] Build as one screen with `mode: 'create' | 'edit'` (D8) rather than
-      two — same layout, edit just prefills + relabels (`Edit litter` /
-      `Clear litter`)
+`app/litter-log.tsx`. Built against Figma (Plog Design, node 681:1945)
+rather than spec D1 where they differ — bag size first, no quick-pick
+chips, stepper starts at `None` (decided 2026-10-08) instead of spec's
+levels starting at 1.
+
+- [x] Header: back + `Litter Log` — `TopBar depth={2}`
+- [x] Stepper (`None` through `A full bag`), bag illustration fills from
+      the bottom by ratio — no separate quick-pick chips (Figma deviation
+      above)
+- [x] Bag size chips (`5L`/`10L`/`15L`/`20L`/`25L`) — `Chip`. "Add other
+      size" chip is Figma-only, **not wired** (no spec'd input/limits)
+- [x] Photo area: `expo-image-picker` + `expo-image-manipulator` (resize
+      to 2048px long edge), preview with remove
+- [x] `Submit` / `I didn't collect any this time`, both disabled while a
+      save is in flight (`saving` state)
+- [x] Back button → confirm dialog → `Leave` saves liters:0 (explicit
+      zero, same as "I didn't collect any" — claude.md: "0 L sessions are
+      real sessions", not left null) and goes Home
+- [x] `src/lib/litter.ts`: `computeLiters` + `FILL_LEVELS`/`BAG_SIZES_L`,
+      unit tested
+- [x] Levels 0–5 only (0=`None` added per the Figma deviation above,
+      1-5 map to spec's levels); 6+ still on hold (H1-1 D1)
+- [x] `src/api/sessions.ts`: `updateLitter(sessionId, payload)` — updates
+      the row `createSession` (C6) already made, uploads the photo (if
+      any) to `session-photos` first. Verified end-to-end against the
+      local Supabase instance
+- [ ] `+N` bag icon display logic (G4.3) — `computeBagIconFills` exists in
+      `litter.ts` but isn't used anywhere yet (no screen shows the icon
+      row — that's G2/My tab, not this screen)
+- [ ] D8 (edit mode, `mode: 'create' | 'edit'`): **not built** — no entry
+      point exists yet either (Session detail / F isn't built)
+- [ ] Destination after a successful save is Home (`router.replace('/')`),
+      not the Impact card — **E isn't built yet**, flagged in both
+      `litter-log.tsx`'s own doc comment and here rather than guessed at
 
 ## E. Impact card
 
