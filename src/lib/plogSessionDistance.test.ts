@@ -1,4 +1,4 @@
-import { computeDistanceKm, type RoutePoint } from './plogSessionDistance';
+import { computeDistanceKm, splitActiveSegments, type RoutePoint } from './plogSessionDistance';
 
 const point = (lat: number, lng: number, overrides: Partial<RoutePoint> = {}): RoutePoint => ({
   lat,
@@ -36,5 +36,30 @@ describe('computeDistanceKm', () => {
   it('treats null accuracy as unusable', () => {
     const km = computeDistanceKm([point(0, 0), point(0.01, 0, { accuracy: null })]);
     expect(km).toBe(0);
+  });
+});
+
+describe('splitActiveSegments', () => {
+  it('is one segment with no pauses', () => {
+    expect(splitActiveSegments([point(0, 0), point(1, 0)])).toHaveLength(1);
+  });
+
+  it('splits at paused points and drops them', () => {
+    const segments = splitActiveSegments([
+      point(0, 0),
+      point(1, 0),
+      point(2, 0, { isPaused: true }),
+      point(3, 0, { isPaused: true }),
+      point(4, 0),
+      point(5, 0),
+    ]);
+    expect(segments.map((s) => s.map((p) => p.lat))).toEqual([
+      [0, 1],
+      [4, 5],
+    ]);
+  });
+
+  it('drops segments too short to draw', () => {
+    expect(splitActiveSegments([point(0, 0), point(1, 0, { isPaused: true }), point(2, 0)])).toEqual([]);
   });
 });

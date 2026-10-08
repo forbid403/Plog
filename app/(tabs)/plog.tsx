@@ -20,7 +20,7 @@ import { shadowLayerToStyle } from '../../src/lib/shadow';
 import { formatDistanceKm, formatDuration, formatPace } from '../../src/lib/format';
 import { createSession } from '../../src/api/sessions';
 import { deletePointsForSession, getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
-import { computeDistanceKm, type RoutePoint } from '../../src/lib/plogSessionDistance';
+import { computeDistanceKm, splitActiveSegments, type RoutePoint } from '../../src/lib/plogSessionDistance';
 import { computeElevationGainM } from '../../src/lib/plogSessionElevation';
 import { computeAvgPaceSecPerKm } from '../../src/lib/plogSessionTime';
 import { colors, shadows, spacing, typography } from '../../src/theme';
@@ -238,13 +238,15 @@ export default function PlogScreen() {
         zoomTapEnabled
         onPanDrag={() => setFollowing(false)}
       >
-        {recording && points.length > 1 && (
-          <Polyline
-            coordinates={points.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
-            strokeColor={colors.blue['500']}
-            strokeWidth={4}
-          />
-        )}
+        {recording &&
+          splitActiveSegments(routePoints).map((segment, i) => (
+            <Polyline
+              key={i}
+              coordinates={segment.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
+              strokeColor={colors.blue['500']}
+              strokeWidth={4}
+            />
+          ))}
       </MapView>
 
       {recording ? (

@@ -50,3 +50,23 @@ export function computeDistanceKm(points: RoutePoint[]): number {
 
   return totalMeters / 1000;
 }
+
+/**
+ * Splits the route at paused points into separately drawn segments, so
+ * nothing is drawn for a pause (not even a straight line across it).
+ * Segments with fewer than 2 points can't be drawn and are dropped.
+ */
+export function splitActiveSegments(points: RoutePoint[]): RoutePoint[][] {
+  const segments: RoutePoint[][] = [];
+  let current: RoutePoint[] = [];
+  for (const point of points) {
+    if (point.isPaused) {
+      segments.push(current);
+      current = [];
+    } else {
+      current.push(point);
+    }
+  }
+  segments.push(current);
+  return segments.filter((segment) => segment.length > 1);
+}
