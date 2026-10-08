@@ -245,29 +245,63 @@ levels starting at 1.
       not the Impact card — **E isn't built yet**, flagged in both
       `litter-log.tsx`'s own doc comment and here rather than guessed at
 
-## E. Impact card
+## E. Impact card — done except Copy Link and the session-detail entry point
 
-- [ ] Header: back, `Impact card`, `Done` — dark green background
-- [ ] Card: date, `You collected`, litter amount (or `– L` if 0L/unset),
-      route map + photo (photo overlapping map; map only + larger if no
-      photo), place name, metrics (time · distance · elevation)
-- [ ] 0 L sessions still get a shareable card (litter value empty, no
-      photo)
-- [ ] Capture card as image: `react-native-view-shot`, 1080×1920
-- [ ] Share sheet (white bottom sheet, reuse **`BottomSheet`**):
-  - [ ] Instagram Story via `react-native-share` — ⚠️ needs a Meta App ID
-        (spec 0.5 prerequisite — confirm this exists before building).
-        Hide button if Instagram isn't installed
-  - [ ] WhatsApp / Telegram via `react-native-share`, system share sheet
-        fallback if not installed
-  - [ ] Copy Link → clipboard + `Link copied` toast
-  - [ ] Download → `expo-media-library` save + `Saved to Photos` toast
-- [ ] Entry from Litter log submit: `Done` → Home. Entry from session
-      detail/My feed share: `Done` → closes to previous screen
-- [ ] **Not built yet, defer**: public card web page
+`app/impact-card.tsx`. Built against Figma (Plog Design, node 681:1985).
+Reached only from Litter log right now (pushed, not replaced, so Back pops
+to Litter log with its input intact — E3's "Back to Litter log to edit").
+
+- [x] Header: back (glass circle), `Impact card`, `Done` (glass pill,
+      reuses `Button variant="glass"`) — dark green background. The exact
+      bg color (`rgba(4,59,20,0.81)`) isn't a design token — flattened to
+      an opaque hex, flagged in a code comment like the existing
+      BottomNavigation shadow gap
+- [x] Card: date (`formatImpactCardDate`, new in `format.ts`), `You
+      collected`, litter amount (`formatLiters`, new in `format.ts`, `– L`
+      when `liters` is null), route map (`react-native-maps`, non-interactive,
+      bounds fit to the route) + photo overlapping it, metrics row
+      (time/distance/elevation, same style as C4's guard sheet)
+- [ ] Place name: **not shown** — `placeName` is always null (reverse
+      geocoding isn't built, Backend gaps), the location line is omitted
+      rather than faked
+- [ ] "Map only, larger, if no photo" [Proposed] — not implemented, the
+      map frame is the same size either way
+- [x] 0 L sessions get a card too — `liters: 0` isn't null (D7 always
+      saves an explicit number), so this shows `0 L`, not `– L`.
+      `– L` only happens if `updateLitter` was somehow never called —
+      defensive, not a reachable path in the current flow
+- [x] Capture: `react-native-view-shot`, captures the card specifically
+      (not the whole screen) per spec — **not** resized to exactly
+      1080×1920 (Stories ratio), captures at native resolution instead,
+      flagged as a simplification in a code comment
+- [x] Share sheet (`BottomSheet`, `showHandle={false}`, opened on mount —
+      spec shows it as part of the screen's default layout, not a toggle):
+  - [x] WhatsApp / Telegram: `Share.shareSingle` (direct target, no extra
+        config), falls back to the generic `Share.open()` system sheet on
+        failure (e.g. app not installed — always true on the Simulator)
+  - [x] Instagram Story: **skips** the dedicated `INSTAGRAM_STORIES`
+        target entirely (its typings require a Meta App ID we don't have
+        — spec 0.5's own flagged prerequisite) and goes straight to the
+        generic share sheet
+  - [ ] Copy Link: **not wired** — no public card URL exists yet (E4's own
+        note: ship client-side share first). Button shows "Not available
+        yet" instead of a broken/fake link
+  - [x] Download: `expo-media-library`, requests write-only permission
+        (`requestPermissionsAsync(true)`), `Saved to Photos` alert.
+        Required adding the `expo-media-library` config plugin to
+        `app.json` (`savePhotosPermission`) and a full native rebuild
+        (`npx expo prebuild` + `npx expo run:ios`) — a Metro JS reload
+        alone wouldn't have picked up the new iOS permission string
+  - [ ] "Hide button if Instagram isn't installed" [Proposed] — not
+        implemented, all three social buttons always show
+- [x] `Done` → Home (`router.replace('/')`) — doesn't clear Plog/Litter
+      log from the stack beneath, same simplification Litter log's own
+      navigation already makes
+- [ ] Session detail / My feed share entry point — not reachable yet,
+      F (session detail) isn't built
+- [ ] **Not built, deferred**: public card web page
       (`https://{domain}/c/{cardId}`) and server-side `impactCardUrl`
-      generation — ship client-side share first (captured image), wire
-      the public URL later
+      generation
 
 ## F. Session detail
 

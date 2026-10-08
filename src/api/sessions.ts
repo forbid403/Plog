@@ -24,6 +24,46 @@ export type SessionRow = {
   title: string;
 };
 
+export type SessionDetail = {
+  id: string;
+  startedAt: string;
+  timezone: string;
+  durationSec: number;
+  distanceKm: number;
+  elevationGainM: number | null;
+  liters: number | null;
+  photoUrl: string | null;
+  /** Reverse-geocoded (B5.1/G7.2) — [Proposed], not computed server-side yet, always null for now. */
+  placeName: string | null;
+  route: RoutePoint[];
+};
+
+function toSessionDetail(row: {
+  id: string;
+  started_at: string;
+  timezone: string;
+  duration_sec: number;
+  distance_km: number;
+  elevation_gain_m: number | null;
+  liters: number | null;
+  photo_url: string | null;
+  place_name: string | null;
+  route: RoutePoint[];
+}): SessionDetail {
+  return {
+    id: row.id,
+    startedAt: row.started_at,
+    timezone: row.timezone,
+    durationSec: row.duration_sec,
+    distanceKm: row.distance_km,
+    elevationGainM: row.elevation_gain_m,
+    liters: row.liters,
+    photoUrl: row.photo_url,
+    placeName: row.place_name,
+    route: row.route,
+  };
+}
+
 async function currentUserId(): Promise<string> {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
@@ -58,6 +98,17 @@ export async function createSession(payload: CreateSessionPayload): Promise<Sess
     .single();
   if (error) throw error;
   return data;
+}
+
+/** E (Impact card) / F (session detail): fetches one session, owner-only (RLS). */
+export async function getSessionDetail(id: string): Promise<SessionDetail> {
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('id, started_at, timezone, duration_sec, distance_km, elevation_gain_m, liters, photo_url, place_name, route')
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return toSessionDetail(data);
 }
 
 export type UpdateLitterPayload = {

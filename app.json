@@ -43,7 +43,13 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-task-manager"
+      "expo-task-manager",
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Plog saves your Impact card to your photo library when you tap Download."
+        }
+      ]
     ],
     "scheme": "plog"
   }

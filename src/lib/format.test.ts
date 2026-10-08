@@ -1,4 +1,4 @@
-import { formatDistanceKm, formatDuration, formatPace } from './format';
+import { formatDistanceKm, formatDuration, formatImpactCardDate, formatLiters, formatPace } from './format';
 
 describe('formatDuration', () => {
   it('formats under a minute', () => expect(formatDuration(5)).toBe('0:05'));
@@ -24,4 +24,22 @@ describe('formatPace', () => {
   it('rounds 59.6s up to the next minute', () => {
     expect(formatPace(59.6)).toBe('1′00″');
   });
+});
+
+describe('formatImpactCardDate', () => {
+  it('formats as D Mon YYYY in the given timezone', () => {
+    expect(formatImpactCardDate('2026-08-26T01:00:00Z', 'Australia/Sydney')).toBe('26 Aug 2026');
+  });
+
+  it('uses the given timezone, not device-local (date rolls over)', () => {
+    // 2026-01-01T13:00:00Z is 2026-01-02 in Sydney (UTC+11)
+    expect(formatImpactCardDate('2026-01-01T13:00:00Z', 'Australia/Sydney')).toBe('2 Jan 2026');
+  });
+});
+
+describe('formatLiters', () => {
+  it('drops the decimal when whole', () => expect(formatLiters(15)).toBe('15 L'));
+  it('keeps 1 decimal when not whole', () => expect(formatLiters(37.5)).toBe('37.5 L'));
+  it('rounds to 1 decimal', () => expect(formatLiters(7.46)).toBe('7.5 L'));
+  it('formats 0', () => expect(formatLiters(0)).toBe('0 L'));
 });

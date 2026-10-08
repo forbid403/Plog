@@ -41,9 +41,7 @@ async function resizeToMaxEdge(asset: ImagePicker.ImagePickerAsset): Promise<Pho
  * "Finish & Log litter" time (app/(tabs)/plog.tsx's handleGuardFinish) —
  * this screen only ever updates it (D7's updateLitter), never creates one.
  *
- * Not wired yet: the Impact card (E) this should navigate to doesn't
- * exist, so a successful save just goes Home instead — flagged below, not
- * guessed at. Edit mode (D8) also has no entry point yet.
+ * Not wired yet: edit mode (D8) has no entry point yet.
  */
 export default function LitterLogScreen() {
   const router = useRouter();
@@ -66,8 +64,9 @@ export default function LitterLogScreen() {
     setSaving(true);
     try {
       await updateLitter(sessionId, { fillRatio: 0, bagSizeLiters: null, liters: 0 });
-      // E (Impact card) isn't built — going Home instead of into it.
-      router.replace('/');
+      // push, not replace — E3: Back from the Impact card pops here with
+      // input kept, so Litter log must stay on the stack underneath.
+      router.push({ pathname: '/impact-card', params: { sessionId } });
     } catch (e) {
       console.error('[litter-log] failed to save:', e);
       Alert.alert('Could not save', 'Check your connection and try again.');
@@ -106,8 +105,7 @@ export default function LitterLogScreen() {
         liters: computeLiters(ratio, bagSizeL as number),
         photoUri: photo?.uri,
       });
-      // E (Impact card) isn't built — going Home instead of into it.
-      router.replace('/');
+      router.push({ pathname: '/impact-card', params: { sessionId } });
     } catch (e) {
       console.error('[litter-log] failed to save:', e);
       Alert.alert('Could not save', 'Check your connection and try again.');
