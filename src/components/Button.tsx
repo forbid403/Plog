@@ -92,24 +92,34 @@ export default function Button({ label, size = 'medium', variant = 'fill', disab
   };
 
   if (variant === 'glass') {
+    // BlurView + Pressable both set to flex:1 (nested, nothing else
+    // establishing a size) left the Text with no resolvable content box —
+    // rendered as an empty pill, confirmed via screenshot (onboarding's
+    // Continue button, same bug impact-card's Done button never got
+    // caught having). Fixed by giving the Pressable itself the real size
+    // (sizeStyle) and layering BlurView as an absolutely-filled backdrop
+    // instead of a flex ancestor — same shape BottomNavigation's
+    // (working) glass bar uses: BlurView sized by something other than a
+    // nested flex:1 chain.
     return (
-      <View style={[styles.glassShadowWrapper, glassShadowStyle, sizeStyle, disabled && styles.disabledOpacity, style]}>
-        <BlurView intensity={20} tint="light" style={styles.glassBlur}>
-          <Pressable
-            onPress={onPress}
-            disabled={disabled}
-            accessibilityRole="button"
-            accessibilityState={{ disabled }}
-            style={[
-              styles.content,
-              styles.glassPressable,
-              { backgroundColor: palette.background, paddingHorizontal: dims.paddingHorizontal, paddingVertical: dims.paddingVertical },
-            ]}
-          >
-            {content}
-          </Pressable>
-        </BlurView>
-      </View>
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        style={[styles.glassShadowWrapper, glassShadowStyle, sizeStyle, disabled && styles.disabledOpacity, style]}
+      >
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
+        <View
+          style={[
+            styles.content,
+            StyleSheet.absoluteFill,
+            { backgroundColor: palette.background, paddingHorizontal: dims.paddingHorizontal, paddingVertical: dims.paddingVertical },
+          ]}
+        >
+          {content}
+        </View>
+      </Pressable>
     );
   }
 
@@ -142,14 +152,7 @@ const styles = StyleSheet.create({
   },
   glassShadowWrapper: {
     borderRadius: spacing.full,
-  },
-  glassBlur: {
-    flex: 1,
-    borderRadius: spacing.full,
     overflow: 'hidden',
-  },
-  glassPressable: {
-    flex: 1,
   },
   disabledOpacity: {
     opacity: 0.5,

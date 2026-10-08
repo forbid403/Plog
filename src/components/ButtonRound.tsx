@@ -106,21 +106,23 @@ export default function ButtonRound({
   const containerStyle: ViewStyle = { width: dims.container, height: dims.container, borderRadius: spacing.full };
 
   if (variant === 'glass') {
+    // Same fix as Button.tsx's glass variant: BlurView+Pressable both
+    // flex:1 (nested, nothing else sizing them) left Text/icon content
+    // with no resolvable box — rendered as an empty circle. The Pressable
+    // now gets the real size directly; BlurView is an absolutely-filled
+    // backdrop layer instead of a flex ancestor.
     return (
-      <View style={[containerStyle, glassShadowStyle, disabled && styles.disabledOpacity, style]}>
-        <BlurView intensity={20} tint="light" style={[styles.blur, { borderRadius: spacing.full }]}>
-          <Pressable
-            onPress={onPress}
-            disabled={disabled}
-            accessibilityRole="button"
-            accessibilityLabel={accessibilityLabel ?? label}
-            accessibilityState={{ disabled }}
-            style={[styles.content, { backgroundColor: palette.background }]}
-          >
-            {content}
-          </Pressable>
-        </BlurView>
-      </View>
+      <Pressable
+        onPress={onPress}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityState={{ disabled }}
+        style={[styles.centered, containerStyle, styles.clip, glassShadowStyle, disabled && styles.disabledOpacity, style]}
+      >
+        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={[styles.centered, StyleSheet.absoluteFill, { backgroundColor: palette.background }]}>{content}</View>
+      </Pressable>
     );
   }
 
@@ -148,8 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  blur: {
-    flex: 1,
+  clip: {
     overflow: 'hidden',
   },
   disabledOpacity: {

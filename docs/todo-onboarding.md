@@ -1,79 +1,106 @@
-# TODO — Onboarding (Part A)
+# TODO — Onboarding (Part A) — done except editable-later / Android
 
-Owner: first-launch flow (slides → permission primer → profile setup →
-Home). Discovered as a hard blocker 2026-10-08: `createSession` (C6) needs
-a signed-in user, and nothing in the app has ever called `signUp()`
-(`src/api/auth.ts`, already built) — there is currently no path to a
-signed-in state at all, so every screen past C4's "Finish & Log litter"
-fails with "No signed-in user".
+Owner: first-launch flow (slides → profile setup → Home). Discovered as a
+hard blocker 2026-10-08: `createSession` (C6) needs a signed-in user, and
+nothing in the app had ever called `signUp()` (`src/api/auth.ts`, already
+built) — there was no path to a signed-in state at all, so every screen
+past C4's "Finish & Log litter" failed with "No signed-in user".
 
-Spec source: `docs/spec.md` Part A.
+Spec source: `docs/spec.md` Part A — but the real design (Figma, Plog
+Design node 685:2741/685:2750/685:2772, given directly 2026-10-08)
+overrides spec text where they differ, same as every other screen in this
+app. Two real differences:
 
-## A1-A2. Slides
+- **No A3 (location permission primer)** — confirmed directly there isn't
+  one in the design. Location permission is requested wherever it's
+  actually needed instead (already built: `useCurrentLocation`, used by
+  the Plog idle screen).
+- **A "Skip it for now" link exists** on profile setup that spec's A4
+  table doesn't mention — followed the design (see A4 below).
 
-- [ ] Two full-screen slides, background photo + dark overlay, green
-      `Plog` logo top-left, page indicator top (longer bar = current slide)
-- [ ] Slide 1: `Run. Pick up litter. Repeat.` / body copy / `Continue`
-      (translucent) → slide 2
-- [ ] Slide 2: `See your impact.` / body copy / `Get Started` (green) →
-      A3 → A4 → Home
-- [ ] Swipe left/right also navigates [Proposed]
-- [ ] No Skip button [Confirmed, per design]
-- [ ] Shown once on first launch only — completion flag stored on-device
-      (not account-level; reinstall shows it again)
+## A1-A2. Slides — done (`app/onboarding.tsx`)
 
-## A3. Location permission primer [Proposed]
+Figma: node 685:2741 ("Onboarding - 3") / 685:2750 ("Onboarding - 4").
 
-- [ ] Short primer screen explaining why location is needed, then the
-      system permission prompt
-- [ ] Denied → still go to Home (weather card replaced by a permission
-      prompt card; re-asked when entering the Plog tab — check B2's actual
-      behavior here once Home exists)
+- [x] Two full-screen slides, background photo (downloaded from Figma,
+      resized/recompressed — `assets/onboarding/slide{1,2}.jpg`) + dark
+      overlay, green `Plog` logo top-left (Afacad font, see below), 3-dot
+      indicator (the 3rd dot represents the sign-up step, which isn't
+      part of this screen's own swipeable pager — confirmed directly)
+- [x] Slide 1: `Run. Pick up litter. Repeat.` / body copy / `Continue`
+      (glass/translucent) → slide 2
+- [x] Slide 2: `See your impact.` / body copy / `Get Started` (green) →
+      `/onboarding-profile`
+- [x] Swipe left/right also navigates — horizontal paging `ScrollView`
+- [x] No Skip button on the slides themselves [Confirmed, per design]
+- [x] Shown once on first launch only — `src/lib/onboardingStorage.ts`,
+      flag in `expo-secure-store` (device-level, not account-level, so a
+      reinstall shows it again even if Supabase session data somehow
+      persisted)
+- [x] Afacad font (logo + large titles — Figma uses this instead of SF
+      Pro for display type here) — `@expo-google-fonts/afacad` +
+      `expo-font`, loaded in `app/_layout.tsx` with the splash screen
+      held (`expo-splash-screen`) until ready, so onboarding never
+      flashes a fallback system font
 
-## A4. Profile setup (sign-up) [Confirmed]
+## A4. Profile setup (sign-up) — done (`app/onboarding-profile.tsx`)
 
-No Figma design for this screen — layout is [Proposed], spec gives the
-elements only.
+Figma: node 685:2772 ("Sign-up") — title is literally `Set your profile`
+(not spec's proposed `Set up your profile`), save button is `Save` (not
+`Continue`).
 
-- [ ] Title `Set up your profile` [Proposed]
-- [ ] Profile image: circular, tap → `Take photo` / `Choose from library`
-      (same picker pattern as Litter log's photo area). Optional, default
-      avatar if none
-- [ ] Nickname: required, 2-20 chars, trimmed. Duplicates allowed
-      [Proposed] — not a login identifier
-- [ ] `Continue`: enabled once nickname is valid → calls
-      `signUp(nickname, avatarUri?)` (already built, `src/api/auth.ts`) →
-      Home
-- [ ] Error: on failure, show a message, keep input, allow retry (don't
-      clear the form)
-- [ ] Avatar used in: Home/My header avatars, public card web page (E4) —
-      not editable later (out of MVP scope, per spec)
+- [x] Title `Set your profile`, Avatar (reused `size="large"` component,
+      92px in Figma vs the component's existing 80px — minor pre-existing
+      inconsistency, not chased), tap → `Take photo` / `Choose from
+      library` (same picker pattern as Litter log's photo area)
+- [x] Nickname: required, 2-20 chars, trimmed. Duplicates allowed
+      [Proposed] — not a login identifier. Input shows "Nickname" as a
+      placeholder only (no separate label, no required asterisk — matches
+      the design, not spec's text description)
+- [x] `Save`: enabled once nickname is valid → `signUp(nickname,
+      avatarUri?)` → marks onboarding complete → Home
+- [x] `Skip it for now`: **not in spec**, but in the design — signs up
+      with a generated nickname (`Plogger####`) and no avatar instead of
+      literally skipping sign-up (a `sessions` row always needs a
+      `profiles` row via FK, so *some* account has to exist)
+- [x] Error: on failure, Alert + keep input, allow retry
+- [ ] Avatar used in Home/My header avatars, public card web page (E4) —
+      not editable later (out of MVP scope, per spec) — not verified yet,
+      those screens don't exist
 
-### Account handling (already built, `src/api/auth.ts`)
+### Account handling (`src/api/auth.ts`, already built before this)
 
-- [x] `signUp()`: anonymous sign-in (`supabase.auth.signInAnonymously()`)
-      if no session, then inserts the `profiles` row. Token persisted via
-      `expo-secure-store` (supabase-js's own session storage, wired in
-      `src/api/supabase.ts`)
-- [x] `getMyProfile()`, `signOut()` also already exist, unused until
-      something calls them (My tab, presumably)
+- [x] `signUp()`: anonymous sign-in + `profiles` row insert, token via
+      `expo-secure-store`
+- [x] `getMyProfile()`, `signOut()` exist, unused until something calls
+      them (My tab, presumably)
 
-## Routing
+## Routing — done
 
-- [ ] Nothing gates entry into `(tabs)` on sign-up completion yet —
-      `app/_layout.tsx` has no onboarding route at all. Needs: an
-      onboarding route (outside the `(tabs)` group, matches spec 0.3's
-      "Onboarding, profile setup... Hidden" tab bar rule), an on-device
-      "has completed onboarding" flag (AsyncStorage/SecureStore — distinct
-      from the auth session itself, since A2 says it's shown again after
-      reinstall regardless of account state), and a root redirect: no
-      flag → onboarding; flag but no session → shouldn't normally happen
-      post-A4, but worth a fallback
+- [x] `app/(tabs)/index.tsx` (Home) checks `hasCompletedOnboarding()` on
+      mount and `router.replace('/onboarding')` if not done. Home is this
+      app's actual entry point (no separate root index route — `(tabs)`
+      is a group, its own `index.tsx` already resolves to `/`), so gating
+      lives there rather than in a new top-level route
+- [ ] Home briefly mounts (renders `null`) before the redirect fires —
+      acceptable flash for now, not a real splash-screen-driven gate
 
-## Why this matters now
+## Bug found and fixed along the way
+
+`Button`'s and `ButtonRound`'s `variant="glass"` rendered an **empty**
+pill/circle — no text/icon — caught via screenshot on the slide's
+Continue button. Root cause: `BlurView` and the `Pressable` inside it
+were both `flex:1` with nothing else establishing a size, so the Text
+content had no resolvable box. Fixed in both components: the Pressable
+now gets the real size directly (`sizeStyle`/`containerStyle`), BlurView
+is an absolutely-filled backdrop layer instead of a flex ancestor — same
+shape `BottomNavigation`'s (already working) glass bar uses. This also
+silently fixes Impact card's "Done" button, which had the identical bug
+and had never been visually verified.
+
+## Why this mattered
 
 Every screen built so far that writes to Supabase (`createSession`,
 `updateLitter`) assumes `supabase.auth.getSession()` already has a user.
-Until this part exists, testing C6/D7/E requires a manual workaround (see
-git history / ask in-session) — not a substitute for building this for
-real.
+Before this, testing C6/D7/E required a manual workaround — now the real
+flow produces one.
