@@ -9,7 +9,7 @@ import Button from '../../src/components/Button';
 import ButtonRound from '../../src/components/ButtonRound';
 import CircleIconButton from '../../src/components/CircleIconButton';
 import ArrowRightIcon from '../../src/components/icons/ArrowRightIcon';
-import CaretDownIcon from '../../src/components/icons/CaretDownIcon';
+import CaretLeftIcon from '../../src/components/icons/CaretLeftIcon';
 import FlagCheckeredIcon from '../../src/components/icons/FlagCheckeredIcon';
 import LocateIcon from '../../src/components/icons/LocateIcon';
 import PauseIcon from '../../src/components/icons/PauseIcon';
@@ -254,7 +254,7 @@ export default function PlogScreen() {
           <CircleIconButton
             accessibilityLabel="Back"
             onPress={confirmDiscard}
-            icon={({ size }) => <CaretDownIcon color={colors.brand.primary['700']} size={size} />}
+            icon={({ size }) => <CaretLeftIcon color={colors.brand.primary['700']} size={size} />}
             style={[styles.collapseButton, { top: insets.top + spacing.s }]}
           />
 
