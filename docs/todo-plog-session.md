@@ -67,7 +67,9 @@ leaving the route group.
       threshold reused from C5's own 30m low-accuracy cutoff (C3 itself
       doesn't give a number)
 - [x] Live route line drawn as points come in — `react-native-maps`
-      `Polyline`, fed from `plog_points` (not a local subscription — see C3.1)
+      `Polyline`, fed from `plog_points` (not a local subscription — see C3.1).
+      Split at pauses (`splitActiveSegments`): nothing is drawn for a
+      paused period, not even a straight line from pause to resume
 - [x] Elapsed time + distance (2 decimals) — `src/lib/format.ts`
       (`formatDuration`/`formatDistanceKm`, spec 0.2, unit tested), laid
       out either side of the Pause button rather than strictly
@@ -150,10 +152,8 @@ redesign's sheet isn't dismissible/modal.
 - [x] Drag sheet down = collapse (not Resume — confirmed with the user the
       drag gesture is purely the Collapse/Expand toggle, not tied to
       Resume)
-- [ ] `Finish` calls `usePlogSession().finish()` (ends the session, returns
-      to idle) but does **not** continue into Litter log yet — Part D
-      doesn't exist. Revisit once D is built: wire the summary `finish()`
-      returns into C6's save + navigation
+- [x] `Finish & Log litter` → `usePlogSession().finish()` → C6's
+      `createSession` → Litter log (`/litter-log?sessionId=…`)
 
 ## C5. Calculation lib
 
@@ -162,7 +162,10 @@ noise thresholds):
 
 - [x] Distance: sum consecutive GPS points, excluding points with error
       >30m and paused periods (`plogSessionDistance.ts`; that exclusion
-      rule is exported as `isUsablePoint` and shared by elevation)
+      rule is exported as `isUsablePoint` and shared by elevation). A pause
+      breaks the route: nothing is measured across it (fixed 2026-10-09 —
+      movement during a pause used to count as a straight line). Same for
+      elevation
 - [x] Time: elapsed excluding manual pauses only (`plogSessionTime.ts`)
 - [x] Avg pace: time ÷ distance — `computeAvgPaceSecPerKm` (null at 0 km)
       + `formatPace` (`m′ss″`, `format.ts`)
@@ -173,9 +176,8 @@ noise thresholds):
 - [x] Wired into the recording screen's expanded sheet (elev. gain, avg
       pace). Pace before any distance shows `0′00″` — **spec doesn't
       define this**, our own placeholder
-- [ ] Title generation (G4.4) — server-side at save per claude.md, so
-      build with C6, not here. Place name (reverse geocode) is likewise
-      server-side, see Backend gaps
+- [x] Title generation (G4.4) — server-side trigger, see C6. Place name
+      (reverse geocode) is still a Backend gap
 
 ## C6. Session save
 
@@ -241,9 +243,10 @@ levels starting at 1.
       row — that's G2/My tab, not this screen)
 - [ ] D8 (edit mode, `mode: 'create' | 'edit'`): **not built** — no entry
       point exists yet either (Session detail / F isn't built)
-- [ ] Destination after a successful save is Home (`router.replace('/')`),
-      not the Impact card — **E isn't built yet**, flagged in both
-      `litter-log.tsx`'s own doc comment and here rather than guessed at
+- [x] After a save (Submit / "I didn't collect any") → Impact card
+      (`/impact-card?sessionId=…`)
+- [x] 10px gaps from Figma (chip row, stepper, buttons) use `spacing.s`
+      (8) — decided 2026-10-09: no new token needed
 
 ## E. Impact card — done except Copy Link and the session-detail entry point
 
