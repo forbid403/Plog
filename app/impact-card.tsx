@@ -113,9 +113,14 @@ export default function ImpactCardScreen() {
   // Empty-deps would fire before `session` loads — the BottomSheet below
   // is behind the `if (!session) return ...` early-return, so its ref
   // wouldn't be attached yet and this would silently no-op. Confirmed
-  // directly the sheet never appeared.
+  // directly the sheet still didn't appear even gated on `session` alone
+  // — gorhom's dynamic sizing (enableDynamicSizing, no snapPoints passed)
+  // needs its own content-layout measurement pass before expand() can
+  // resolve a height, so this also waits a frame past mount+session.
   useEffect(() => {
-    if (session) shareSheetRef.current?.open();
+    if (!session) return;
+    const frame = requestAnimationFrame(() => shareSheetRef.current?.open());
+    return () => cancelAnimationFrame(frame);
   }, [session]);
 
   // Spec: "capture the card component" (not the whole screen) — exact
