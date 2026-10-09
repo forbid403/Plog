@@ -277,7 +277,7 @@ export default function ImpactCardScreen() {
           (the BottomSheet component's default with no snapPoints given)
           — confirmed directly the sheet never appeared at all with
           dynamic sizing, on this content, even well after mount. */}
-      <BottomSheet ref={shareSheetRef} showHandle={false} snapPoints={['32%']}>
+      <BottomSheet ref={shareSheetRef} showHandle={false} snapPoints={['32%']} dismissible={false}>
         <Text style={styles.shareTitle}>Share to</Text>
         <View style={styles.shareRow}>
           <ShareButton

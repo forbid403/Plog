@@ -19,6 +19,8 @@ export type BottomSheetProps = {
   snapPoints?: (string | number)[];
   /** Figma's "handles" prop — hide the drag handle (e.g. for a sheet that isn't draggable). */
   showHandle?: boolean;
+  /** Pan-down-to-close and tap-backdrop-to-close. Defaults to true. Set false for a sheet that's a fixed part of the screen (e.g. Impact card's always-open share sheet) rather than a transient one the user can dismiss. */
+  dismissible?: boolean;
   onDismiss?: () => void;
 };
 
@@ -30,7 +32,7 @@ export type BottomSheetProps = {
  * Must be rendered under <BottomSheetModalProvider> (see App.tsx).
  */
 const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function BottomSheet(
-  { children, snapPoints, showHandle = true, onDismiss },
+  { children, snapPoints, showHandle = true, dismissible = true, onDismiss },
   ref
 ) {
   const sheetRef = useRef<GorhomBottomSheet>(null);
@@ -42,9 +44,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
   }));
 
   const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />
-    ),
+    (props: BottomSheetBackdropProps) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />,
     []
   );
 
@@ -54,9 +54,12 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
       index={-1}
       snapPoints={snapPoints}
       enableDynamicSizing={!snapPoints}
-      enablePanDownToClose
+      enablePanDownToClose={dismissible}
       onClose={onDismiss}
-      backdropComponent={renderBackdrop}
+      // A non-dismissible sheet is a fixed part of the screen (e.g.
+      // Impact card's always-open share sheet) — no dimming backdrop
+      // implying it can be tapped away.
+      backdropComponent={dismissible ? renderBackdrop : undefined}
       backgroundStyle={styles.background}
       handleStyle={styles.handleArea}
       handleIndicatorStyle={styles.handleIndicator}
