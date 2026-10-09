@@ -91,7 +91,9 @@ export async function createSession(payload: CreateSessionPayload): Promise<Sess
       duration_sec: payload.durationSec,
       distance_km: payload.distanceKm,
       elevation_gain_m: payload.elevationGainM,
-      avg_pace_sec_per_km: payload.avgPaceSecPerKm,
+      // avg_pace_sec_per_km is `integer` in the schema — computeAvgPaceSecPerKm
+      // (src/lib/plogSessionTime.ts) returns a plain division result, fractional.
+      avg_pace_sec_per_km: payload.avgPaceSecPerKm !== null ? Math.round(payload.avgPaceSecPerKm) : null,
       route: payload.route,
     })
     .select('id, title')
