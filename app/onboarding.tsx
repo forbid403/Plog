@@ -71,7 +71,7 @@ export default function OnboardingSlidesScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX }] }]}>
-        <Image source={current.photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <Image key={slide} source={current.photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
         <View style={styles.overlay} />
       </Animated.View>
 

@@ -114,10 +114,11 @@ const styles = StyleSheet.create({
     color: colors.greyScale['900'],
   },
   fields: {
-    alignItems: 'center',
     gap: spacing['3xl'],
   },
-  avatar: {},
+  avatar: {
+    alignSelf: 'center',
+  },
   footer: {
     alignItems: 'center',
     gap: spacing.m,
