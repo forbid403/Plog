@@ -396,7 +396,13 @@ export default function PlogScreen() {
               681:2058, "Accidental-tap guard") — only reachable once the
               session clears the minimum-length check in
               handleFinishPress. */}
-          <BottomSheet ref={finishSheetRef}>
+          {/* Explicit snapPoints instead of relying on enableDynamicSizing
+              (the BottomSheet component's default with no snapPoints
+              given) — confirmed on the Impact card's share sheet that
+              dynamic sizing never resolves a height at all on this
+              content, same root component, so fixed here too rather
+              than waiting to hit the identical bug. */}
+          <BottomSheet ref={finishSheetRef} snapPoints={['42%']}>
             <Text style={styles.guardTitle}>Finished your plog session?</Text>
             <View style={styles.guardGrid}>
               <View style={styles.guardMetricColumn}>

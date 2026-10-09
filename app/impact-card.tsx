@@ -10,15 +10,14 @@ import { getSessionDetail, type RoutePoint, type SessionDetail } from '../src/ap
 import {
   Button,
   BottomSheet,
-  CircleIconButton,
   DownloadSimpleIcon,
   InstagramLogoIcon,
   LinkIcon,
   TelegramLogoIcon,
+  TopBar,
   WhatsappLogoIcon,
   type BottomSheetHandle,
 } from '../src/components';
-import CaretLeftIcon from '../src/components/icons/CaretLeftIcon';
 import { formatDistanceKm, formatDuration, formatImpactCardDate, formatLiters } from '../src/lib/format';
 import { colors, spacing, typography } from '../src/theme';
 
@@ -112,15 +111,9 @@ export default function ImpactCardScreen() {
 
   // Empty-deps would fire before `session` loads — the BottomSheet below
   // is behind the `if (!session) return ...` early-return, so its ref
-  // wouldn't be attached yet and this would silently no-op. Confirmed
-  // directly the sheet still didn't appear even gated on `session` alone
-  // — gorhom's dynamic sizing (enableDynamicSizing, no snapPoints passed)
-  // needs its own content-layout measurement pass before expand() can
-  // resolve a height, so this also waits a frame past mount+session.
+  // wouldn't be attached yet and this would silently no-op.
   useEffect(() => {
-    if (!session) return;
-    const frame = requestAnimationFrame(() => shareSheetRef.current?.open());
-    return () => cancelAnimationFrame(frame);
+    if (session) shareSheetRef.current?.open();
   }, [session]);
 
   // Spec: "capture the card component" (not the whole screen) — exact
@@ -205,11 +198,13 @@ export default function ImpactCardScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ gestureEnabled: false }} />
 
-      <View style={[styles.header, { paddingTop: insets.top + spacing.s }]}>
-        <CircleIconButton accessibilityLabel="Back" onPress={() => router.back()} icon={({ size }) => <CaretLeftIcon color={colors.base.white} size={size} />} style={styles.headerGlassButton} />
-        <Text style={styles.headerTitle}>Impact card</Text>
-        <Button label="Done" size="small" variant="glass" onPress={handleDone} />
-      </View>
+      <TopBar
+        depth={2}
+        title="Impact card"
+        onDark
+        onBackPress={() => router.back()}
+        right={<Button label="Done" size="small" variant="glass" onPress={handleDone} />}
+      />
 
       <View style={styles.cardWrapper}>
         <ViewShot ref={cardRef} options={{ format: 'png', quality: 0.92 }} style={[styles.card, cardGlowStyle]}>
@@ -278,7 +273,11 @@ export default function ImpactCardScreen() {
         <Text style={styles.footerNoteText}>You can find this card later in your plog history</Text>
       </View>
 
-      <BottomSheet ref={shareSheetRef} showHandle={false}>
+      {/* Explicit snapPoints instead of relying on enableDynamicSizing
+          (the BottomSheet component's default with no snapPoints given)
+          — confirmed directly the sheet never appeared at all with
+          dynamic sizing, on this content, even well after mount. */}
+      <BottomSheet ref={shareSheetRef} showHandle={false} snapPoints={['32%']}>
         <Text style={styles.shareTitle}>Share to</Text>
         <View style={styles.shareRow}>
           <ShareButton
@@ -341,22 +340,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.body.base.fontFamily,
     fontWeight: typography.body.base.fontWeight,
     fontSize: typography.body.base.fontSize,
-    color: colors.base.white,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.l,
-    paddingBottom: spacing.s,
-  },
-  headerGlassButton: {
-    backgroundColor: colors.opacity.white50,
-  },
-  headerTitle: {
-    fontFamily: typography.body.baseBold.fontFamily,
-    fontWeight: typography.body.baseBold.fontWeight,
-    fontSize: typography.body.baseBold.fontSize,
     color: colors.base.white,
   },
   cardWrapper: {
