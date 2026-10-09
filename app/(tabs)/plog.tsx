@@ -1,7 +1,18 @@
 import { useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Linking, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  LayoutAnimation,
+  Linking,
+  PanResponder,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
+} from 'react-native';
 import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheet, { type BottomSheetHandle } from '../../src/components/BottomSheet';
@@ -35,6 +46,14 @@ const POINTS_POLL_INTERVAL_MS = 2000;
 // C4's minimum session: under 1 minute or under 0.1 km cannot be saved.
 const MIN_SESSION_SEC = 60;
 const MIN_SESSION_KM = 0.1;
+
+// LayoutAnimation (sheet expand/collapse, below) needs this opt-in on
+// Android's old architecture bridge; iOS and Fabric don't need it, but it's
+// a no-op there, not a native state dependent on a build — safe to call
+// at module scope either way.
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // The re-centre button needs to read clearly over a busy map, so it's solid
 // white + a real shadow here instead of CircleIconButton's default "glass"
@@ -132,6 +151,15 @@ export default function PlogScreen() {
     ]);
   };
 
+  // Animates the sheet's height change between the Collapse/Expand content
+  // shapes — LayoutAnimation (built-in, no new dependency) rather than
+  // Reanimated, since this is just "animate whatever layout change happens
+  // next", not a gesture-driven/interruptible animation.
+  const animateExpanded = (next: boolean) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(next);
+  };
+
   // Figma (node 117:518): expand/collapse is a drag on the sheet's own
   // "Drag Area" handle, not a tap — swipe the handle up to expand, down to
   // collapse. 20px is an unspec'd threshold, same kind of approximation as
@@ -141,8 +169,8 @@ export default function PlogScreen() {
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 5,
         onPanResponderRelease: (_, gesture) => {
-          if (gesture.dy < -20) setExpanded(true);
-          else if (gesture.dy > 20) setExpanded(false);
+          if (gesture.dy < -20) animateExpanded(true);
+          else if (gesture.dy > 20) animateExpanded(false);
         },
       }),
     []
