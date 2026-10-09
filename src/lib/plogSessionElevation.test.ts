@@ -37,4 +37,8 @@ describe('computeElevationGainM', () => {
       computeElevationGainM([at(10), at(50, { isPaused: true }), at(50, { accuracy: 50 }), at(null), at(10)])
     ).toBe(0);
   });
+
+  it("doesn't count a climb made during a pause", () => {
+    expect(computeElevationGainM([at(10), at(30, { isPaused: true }), at(50), at(50)])).toBe(0);
+  });
 });

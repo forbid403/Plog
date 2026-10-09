@@ -27,10 +27,17 @@ describe('computeDistanceKm', () => {
     expect(withBadPoint).toBeCloseTo(withoutBadPoint, 5);
   });
 
-  it('excludes paused points', () => {
-    const withPaused = computeDistanceKm([point(0, 0), point(0.005, 0, { isPaused: true }), point(0.01, 0)]);
-    const withoutPaused = computeDistanceKm([point(0, 0), point(0.01, 0)]);
-    expect(withPaused).toBeCloseTo(withoutPaused, 5);
+  it('measures nothing across a pause', () => {
+    // Moved ~1.11km while paused: neither the paused leg nor the straight
+    // line from pause to resume counts — only the two active legs.
+    const km = computeDistanceKm([
+      point(0, 0),
+      point(0.001, 0),
+      point(0.005, 0, { isPaused: true }),
+      point(0.011, 0),
+      point(0.012, 0),
+    ]);
+    expect(km).toBeCloseTo(0.222, 2);
   });
 
   it('treats null accuracy as unusable', () => {

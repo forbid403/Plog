@@ -34,15 +34,17 @@ export function isUsablePoint(point: RoutePoint): boolean {
 }
 
 /**
- * Excluded (paused or low-accuracy) points are skipped — they don't break
- * the route, the next valid point is still measured from the last valid
- * one, just not from the excluded one itself.
+ * Low-accuracy points are skipped without breaking the route — the next
+ * valid point is measured from the last valid one. A pause does break it:
+ * nothing is measured across a paused period, or movement during the
+ * pause would count as a straight line from pause to resume.
  */
 export function computeDistanceKm(points: RoutePoint[]): number {
   let totalMeters = 0;
   let previous: RoutePoint | null = null;
 
   for (const point of points) {
+    if (point.isPaused) previous = null;
     if (!isUsablePoint(point)) continue;
     if (previous) totalMeters += haversineMeters(previous, point);
     previous = point;
