@@ -38,7 +38,7 @@ const SLIDES: Slide[] = [
 // reached by navigating off this screen entirely.
 const TOTAL_STEPS = 3;
 const SLIDE_IN_MS = 320;
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 /**
  * A1-A2: one screen, not a horizontal pager — confirmed directly: only
@@ -70,8 +70,8 @@ export default function OnboardingSlidesScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX }] }]}>
-        <Image key={slide} source={current.photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Animated.View style={[styles.photoWrapper, { transform: [{ translateX }] }]}>
+        <Image key={slide} source={current.photo} style={styles.photo} resizeMode="cover" />
         <View style={styles.overlay} />
       </Animated.View>
 
@@ -104,6 +104,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.greyScale['950'],
+  },
+  // Explicit numeric width/height rather than StyleSheet.absoluteFill —
+  // confirmed directly the photo was rendering far more zoomed-in than a
+  // correct "cover" fit (not just a framing/crop preference, an actual
+  // oversized render), on both slides, surviving the key={slide} fix
+  // below. Edge-pinned (0/0/0/0) absolute positioning nested two levels
+  // deep (this wrapper, then Image) under an Animated transform is the
+  // one dimension-less link in the chain — giving Image a real number
+  // removes the ambiguity rather than guessing further at the cause.
+  photoWrapper: {
+    position: 'absolute',
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
+  photo: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
   },
   overlay: {
     position: 'absolute',
