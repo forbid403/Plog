@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Animated, Image, StyleSheet, Text, View } from 'react-native';
+import { Animated, Dimensions, Image, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../src/components';
@@ -37,39 +37,40 @@ const SLIDES: Slide[] = [
 // confirmed directly: there are only 2 slides here, the 3rd step is
 // reached by navigating off this screen entirely.
 const TOTAL_STEPS = 3;
-const CROSSFADE_MS = 280;
+const SLIDE_IN_MS = 320;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
- * A1-A2: one screen, not a horizontal pager — confirmed directly: the
- * photo/title/body crossfade in place and the indicator advances, rather
- * than the screen paging sideways (Figma: Plog Design, node
- * 685:2741/685:2750 — "Onboarding - 3/4"). No separate location-permission
- * primer (A3) — confirmed directly there isn't one in the design; location
- * permission is requested wherever it's actually needed instead (already
- * built: useCurrentLocation, used by the Plog idle screen).
+ * A1-A2: one screen, not a horizontal pager — confirmed directly: only
+ * the background photo slides in (from the right, covering the previous
+ * one); the indicator and title/body update immediately, no fade (Figma:
+ * Plog Design, node 685:2741/685:2750 — "Onboarding - 3/4"). No separate
+ * location-permission primer (A3) — confirmed directly there isn't one in
+ * the design; location permission is requested wherever it's actually
+ * needed instead (already built: useCurrentLocation, used by the Plog
+ * idle screen).
  */
 export default function OnboardingSlidesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [slide, setSlide] = useState(0);
-  const [opacity] = useState(() => new Animated.Value(1));
+  const [translateX] = useState(() => new Animated.Value(0));
 
   const handlePress = () => {
     if (slide === SLIDES.length - 1) {
       router.push('/onboarding-profile');
       return;
     }
-    Animated.timing(opacity, { toValue: 0, duration: CROSSFADE_MS, useNativeDriver: true }).start(() => {
-      setSlide((current) => current + 1);
-      Animated.timing(opacity, { toValue: 1, duration: CROSSFADE_MS, useNativeDriver: true }).start();
-    });
+    setSlide((current) => current + 1);
+    translateX.setValue(SCREEN_WIDTH);
+    Animated.timing(translateX, { toValue: 0, duration: SLIDE_IN_MS, useNativeDriver: true }).start();
   };
 
   const current = SLIDES[slide];
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX }] }]}>
         <Image source={current.photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
         <View style={styles.overlay} />
       </Animated.View>
@@ -82,10 +83,10 @@ export default function OnboardingSlidesScreen() {
         ))}
       </View>
 
-      <Animated.View style={[styles.content, { top: insets.top + 211, opacity }]}>
+      <View style={[styles.content, { top: insets.top + 211 }]}>
         <Text style={styles.title}>{current.title}</Text>
         <Text style={styles.body}>{current.body}</Text>
-      </Animated.View>
+      </View>
 
       <View style={[styles.buttonWrapper, { bottom: insets.bottom + 54 }]}>
         <Button
