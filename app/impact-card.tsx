@@ -110,9 +110,13 @@ export default function ImpactCardScreen() {
       });
   }, [sessionId]);
 
+  // Empty-deps would fire before `session` loads — the BottomSheet below
+  // is behind the `if (!session) return ...` early-return, so its ref
+  // wouldn't be attached yet and this would silently no-op. Confirmed
+  // directly the sheet never appeared.
   useEffect(() => {
-    shareSheetRef.current?.open();
-  }, []);
+    if (session) shareSheetRef.current?.open();
+  }, [session]);
 
   // Spec: "capture the card component" (not the whole screen) — exact
   // 1080×1920 Stories sizing isn't implemented (E4 [Proposed]), this
