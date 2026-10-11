@@ -59,7 +59,12 @@ export default function TopBar(props: TopBarProps) {
         onPress={props.onBackPress}
         icon={({ color, size }) => <CaretLeftIcon color={color} size={size} />}
       />
-      <Text style={[titleStyle, styles.centeredTitle]}>{props.title}</Text>
+      <View
+        style={[styles.centeredTitle, { top: insets.top + spacing.s, bottom: spacing.m }]}
+        pointerEvents="none"
+      >
+        <Text style={titleStyle}>{props.title}</Text>
+      </View>
       {props.right ?? (showRightIcon ? (
         <CircleIconButton
           accessibilityLabel="More"
@@ -99,7 +104,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatar: {
     width: AVATAR_SIZE,

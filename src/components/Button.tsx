@@ -92,33 +92,23 @@ export default function Button({ label, size = 'medium', variant = 'fill', disab
   };
 
   if (variant === 'glass') {
-    // BlurView + Pressable both set to flex:1 (nested, nothing else
-    // establishing a size) left the Text with no resolvable content box —
-    // rendered as an empty pill, confirmed via screenshot (onboarding's
-    // Continue button, same bug impact-card's Done button never got
-    // caught having). Fixed by giving the Pressable itself the real size
-    // (sizeStyle) and layering BlurView as an absolutely-filled backdrop
-    // instead of a flex ancestor — same shape BottomNavigation's
-    // (working) glass bar uses: BlurView sized by something other than a
-    // nested flex:1 chain.
+    // Label/icons are direct Pressable children (normal flow) so sizes
+    // without an explicit width (small, medium) still size to content —
+    // an absoluteFill wrapper around them doesn't contribute to intrinsic
+    // size and silently collapsed the pill. BlurView + tint stay as
+    // absoluteFill backdrop layers, same shape BottomNavigation's glass
+    // bar uses.
     return (
       <Pressable
         onPress={onPress}
         disabled={disabled}
         accessibilityRole="button"
         accessibilityState={{ disabled }}
-        style={[styles.glassShadowWrapper, glassShadowStyle, sizeStyle, disabled && styles.disabledOpacity, style]}
+        style={[styles.glassShadowWrapper, styles.content, glassShadowStyle, sizeStyle, disabled && styles.disabledOpacity, style]}
       >
         <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
-        <View
-          style={[
-            styles.content,
-            StyleSheet.absoluteFill,
-            { backgroundColor: palette.background, paddingHorizontal: dims.paddingHorizontal, paddingVertical: dims.paddingVertical },
-          ]}
-        >
-          {content}
-        </View>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: palette.background }]} />
+        {content}
       </Pressable>
     );
   }

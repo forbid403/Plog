@@ -46,7 +46,8 @@ found in this repo" table before relying on it — items may have been fixed.
 - [ ] Replace icon, adaptive icon and splash with real designs (blocker #1)
 - [x] Decide `supportsTablet` (blocker #7) — `false`
 - [x] Permission strings: camera / photo library set via the `expo-image-picker` plugin; microphone permission disabled (unused)
-- [ ] Android photo permissions: check whether `expo-media-library` adds `READ_MEDIA_IMAGES`. Play policy can reject it if photo access isn't core — block it with `blockedPermissions` if unneeded
+- [x] Android photo permissions: `expo-media-library` added `READ_MEDIA_IMAGES/VIDEO/AUDIO` by default (Play policy risk) — removed via `granularPermissions: []`; photo picking uses the system picker, Download only writes
+- [ ] Verify Impact card **Download** still works on Android 13+ without those read permissions (real device / emulator)
 - [ ] Confirm the build meets Play's required targetSdk (API level)
 
 ## 4. Background location (biggest review risk)
