@@ -11,8 +11,6 @@ import {
   Button,
   BottomSheet,
   DownloadSimpleIcon,
-  InstagramLogoIcon,
-  LinkIcon,
   TelegramLogoIcon,
   TopBar,
   WhatsappLogoIcon,
@@ -89,8 +87,8 @@ function shareText(liters: number | null): string {
  * per spec ("Back to Litter log to edit, input kept").
  *
  * Not built: the public card web page / server-side impactCardUrl (E4's
- * own note says ship client-side share first) — Copy Link has no URL to
- * copy yet, left as a flagged no-op rather than guessed at. Place name
+ * own note says ship client-side share first) — so Copy Link is hidden,
+ * as is Instagram Story (no Meta App ID). Place name
  * (reverse geocoding) isn't computed server-side yet either (Backend
  * gaps) — the location line is omitted when `placeName` is null instead
  * of showing a fake one.
@@ -113,13 +111,6 @@ export default function ImpactCardScreen() {
         setLoadError(true);
       });
   }, [sessionId]);
-
-  // Empty-deps would fire before `session` loads — the BottomSheet below
-  // is behind the `if (!session) return ...` early-return, so its ref
-  // wouldn't be attached yet and this would silently no-op.
-  useEffect(() => {
-    if (session) shareSheetRef.current?.open();
-  }, [session]);
 
   // Spec: "capture the card component" (not the whole screen) — exact
   // 1080×1920 Stories sizing isn't implemented (E4 [Proposed]), this
@@ -162,19 +153,6 @@ export default function ImpactCardScreen() {
       } catch (fallbackError) {
         console.error('[impact-card] share failed:', e, fallbackError);
       }
-    }
-  };
-
-  // Instagram Stories' dedicated share target needs a Meta App ID
-  // (shareSingle's typings require it) that isn't configured (spec 0.5
-  // prerequisite, not confirmed) — goes straight to the generic share
-  // sheet instead of attempting the dedicated target first.
-  const shareToInstagram = async () => {
-    try {
-      const uri = await captureCard();
-      await Share.open({ url: uri, message: shareText(session?.liters ?? null) });
-    } catch (e) {
-      console.error('[impact-card] share failed:', e);
     }
   };
 
@@ -282,28 +260,21 @@ export default function ImpactCardScreen() {
           (the BottomSheet component's default with no snapPoints given)
           — confirmed directly the sheet never appeared at all with
           dynamic sizing, on this content, even well after mount. */}
-      <BottomSheet ref={shareSheetRef} showHandle={false} snapPoints={SHARE_SHEET_SNAP_POINTS} dismissible={false}>
+      <BottomSheet
+        ref={shareSheetRef}
+        showHandle={false}
+        snapPoints={SHARE_SHEET_SNAP_POINTS}
+        dismissible={false}
+        initiallyOpen
+      >
         <Text style={styles.shareTitle}>Share to</Text>
+        {/* Hidden for release (2026-10-11): Instagram Story needs a Meta App
+            ID, Copy Link needs the public card page — neither exists yet. */}
         <View style={styles.shareRow}>
-          <ShareButton
-            label="Instagram Story"
-            background="#dd2a7b"
-            icon={(color) => <InstagramLogoIcon color={color} />}
-            onPress={shareToInstagram}
-          />
           <ShareButton label="WhatsApp" background="#00e510" icon={(color) => <WhatsappLogoIcon color={color} />} onPress={() => shareToSocial(Social.Whatsapp)} />
           <ShareButton label="Telegram" background="#00b0f2" icon={(color) => <TelegramLogoIcon color={color} />} onPress={() => shareToSocial(Social.Telegram)} />
         </View>
         <View style={styles.shareRow}>
-          <ShareButton
-            label="Copy Link"
-            background={colors.greyScale['50']}
-            iconColor={colors.greyScale['900']}
-            icon={(color) => <LinkIcon color={color} />}
-            // No public card URL to copy yet (E4's own note: ship
-            // client-side share first, wire the public URL later).
-            onPress={() => Alert.alert('Not available yet', "This card's shareable link isn't ready yet.")}
-          />
           <ShareButton label="Download" background={colors.greyScale['50']} iconColor={colors.greyScale['900']} icon={(color) => <DownloadSimpleIcon color={color} />} onPress={handleDownload} />
         </View>
       </BottomSheet>

@@ -21,6 +21,8 @@ export type BottomSheetProps = {
   showHandle?: boolean;
   /** Pan-down-to-close and tap-backdrop-to-close. Defaults to true. Set false for a sheet that's a fixed part of the screen (e.g. Impact card's always-open share sheet) rather than a transient one the user can dismiss. */
   dismissible?: boolean;
+  /** Mounts already open (index 0) instead of closed + needing an imperative open() afterward. For a sheet that's rendered already-open from the start (e.g. gated behind data having loaded) rather than opened later in response to something — confirmed open() called right after mount, even deferred a frame, was unreliable. */
+  initiallyOpen?: boolean;
   onDismiss?: () => void;
 };
 
@@ -32,7 +34,7 @@ export type BottomSheetProps = {
  * Must be rendered under <BottomSheetModalProvider> (see App.tsx).
  */
 const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function BottomSheet(
-  { children, snapPoints, showHandle = true, dismissible = true, onDismiss },
+  { children, snapPoints, showHandle = true, dismissible = true, initiallyOpen = false, onDismiss },
   ref
 ) {
   const sheetRef = useRef<GorhomBottomSheet>(null);
@@ -66,7 +68,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
   return (
     <GorhomBottomSheet
       ref={sheetRef}
-      index={-1}
+      index={initiallyOpen ? 0 : -1}
       snapPoints={snapPoints}
       enableDynamicSizing={!snapPoints}
       enablePanDownToClose={dismissible}

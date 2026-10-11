@@ -9,14 +9,14 @@ found in this repo" table before relying on it — items may have been fixed.
 |---|---|---|
 | 1 | **App icon is the Expo default** | `assets/icon.png` is the Expo template image; Android adaptive icon background `#E6F4FE` is the template default too |
 | 2 | **No account deletion** | Accounts are created (anonymous sign-in + profile), so Apple (5.1.1(v)) and Google both require in-app account deletion. Not in the spec either |
-| 3 | **No Android Google Maps key** | No Google Maps API key in `app.json` — the map renders blank on Android |
-| 4 | **No Android package name** | `android.package` missing (iOS has `com.sonia-bbb.plog`) |
-| 5 | **No EAS config** | No `eas.json` |
+| 3 | **No Android Google Maps key** | Wired (2026-10-11): `app.config.ts` reads `GOOGLE_MAPS_ANDROID_API_KEY` — the key itself still needs issuing and setting in `.env` / EAS env vars |
+| 4 | ~~No Android package name~~ | Fixed: `com.soniabbb.plog` (hyphens aren't allowed; iOS stays `com.sonia-bbb.plog`) |
+| 5 | **EAS config** | `eas.json` added; still need `eas init` (Expo login, writes the project ID) |
 | 6 | **Backend is local-only** | Supabase points at `127.0.0.1`; no hosted project linked |
-| 7 | **iPad support on** | `supportsTablet: true` → iPad screenshots required and iPad layout gets reviewed. Recommend `false` if portrait-phone-only |
-| 8 | **Photo location leak risk** | Litter log uploads the original photo when it's ≤2048px, so EXIF GPS can survive — and the storage buckets are public-read |
+| 7 | ~~iPad support on~~ | Fixed: `supportsTablet: false` |
+| 8 | ~~Photo location leak risk~~ | Fixed: every upload (litter photo, avatar) is re-encoded first (`src/lib/photo-upload.ts`), which strips EXIF |
 | 9 | **Android never run** | Open in `docs/todo-plog-session.md` (C3.1); background location not tested on a real device either |
-| 10 | **Unfinished features** | Session detail (F), Copy Link (no public card page), save-failure retry. Instagram Story sharing needs a Meta App ID. Decide: hide or finish |
+| 10 | **Unfinished features** | Copy Link and Instagram Story are hidden on the Impact card share sheet. Still open: Session detail (F), save-failure retry |
 
 ## 1. Accounts and prerequisites
 
@@ -34,17 +34,18 @@ found in this repo" table before relying on it — items may have been fixed.
 - [ ] Re-verify RLS on the production DB (no cross-user read/write)
 - [ ] Anonymous sign-in abuse protection (Supabase CAPTCHA / rate limits)
 - [ ] Account deletion: DB rows + storage files + auth user (blocker #2)
-- [ ] Strip EXIF before upload — always re-encode the photo (blocker #8)
+- [x] Strip EXIF before upload — always re-encode the photo (blocker #8)
 
 ## 3. App config (`app.json` / EAS)
 
-- [ ] `eas init`, write `eas.json` (development / preview / production profiles)
-- [ ] Set `android.package` — can't change after release
-- [ ] `ios.config.usesNonExemptEncryption: false` (skips export compliance question)
-- [ ] Versioning: EAS `autoIncrement` for build number / versionCode
+- [x] Write `eas.json` (development / preview / production profiles)
+- [ ] `eas init` (needs Expo login)
+- [x] Set `android.package` — can't change after release
+- [x] `ios.config.usesNonExemptEncryption: false` (skips export compliance question)
+- [x] Versioning: EAS `autoIncrement` for build number / versionCode
 - [ ] Replace icon, adaptive icon and splash with real designs (blocker #1)
-- [ ] Decide `supportsTablet` (blocker #7)
-- [ ] Permission strings: location, background location and save-to-photos have copy; **camera / photo library don't (system default text is shown)** — set them via the `expo-image-picker` plugin
+- [x] Decide `supportsTablet` (blocker #7) — `false`
+- [x] Permission strings: camera / photo library set via the `expo-image-picker` plugin; microphone permission disabled (unused)
 - [ ] Android photo permissions: check whether `expo-media-library` adds `READ_MEDIA_IMAGES`. Play policy can reject it if photo access isn't core — block it with `blockedPermissions` if unneeded
 - [ ] Confirm the build meets Play's required targetSdk (API level)
 
@@ -56,7 +57,7 @@ found in this repo" table before relying on it — items may have been fixed.
 
 ## 5. Feature completeness and QA
 
-- [ ] Lock MVP scope: finish or hide unfinished features (blocker #10)
+- [ ] Lock MVP scope: finish or hide unfinished features (blocker #10) — Copy Link / Instagram Story hidden
 - [ ] Real devices (1+ iOS, 1+ Android): record → pause → finish → Litter log → Impact card → share; force-quit recovery; offline behaviour
 - [ ] First full Android run (blocker #9)
 - [ ] Boundary cases: minimum session, 0 L session, permission denied (CLAUDE.md testing list)

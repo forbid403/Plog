@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { prepareUploadJpeg } from '../lib/photo-upload';
 
 export type Profile = {
   userId: string;
@@ -48,7 +49,7 @@ export async function signUp(nickname: string, avatarUri?: string): Promise<Prof
 }
 
 async function uploadAvatar(userId: string, uri: string): Promise<string> {
-  const response = await fetch(uri);
+  const response = await fetch(await prepareUploadJpeg(uri));
   const blob = await response.blob();
   const path = `${userId}/avatar.jpg`;
 

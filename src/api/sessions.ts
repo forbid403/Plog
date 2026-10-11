@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { prepareUploadJpeg } from '../lib/photo-upload';
 
 export type RoutePoint = {
   lat: number;
@@ -139,7 +140,7 @@ export async function updateLitter(sessionId: string, payload: UpdateLitterPaylo
 
 async function uploadSessionPhoto(sessionId: string, uri: string): Promise<string> {
   const userId = await currentUserId();
-  const response = await fetch(uri);
+  const response = await fetch(await prepareUploadJpeg(uri));
   const blob = await response.blob();
   const path = `${userId}/${sessionId}.jpg`;
 

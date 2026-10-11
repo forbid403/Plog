@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Alert, BackHandler, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { updateLitter } from '../src/api/sessions';
 import { Button, CameraOutlineIcon, Chip, MinusIcon, PlusIcon, TopBar, XCircleIcon } from '../src/components';
@@ -18,19 +17,10 @@ const BAG_HEIGHT = 173;
 const STEPPER_BUTTON_SIZE = 40;
 const STEPPER_LABEL_WIDTH = 146;
 const PHOTO_FRAME_HEIGHT = 100;
-const PHOTO_MAX_EDGE_PX = 2048; // D5 [Proposed]
 
 const MAX_LEVEL = FILL_LEVELS.length - 1;
 
 type Photo = { uri: string };
-
-async function resizeToMaxEdge(asset: ImagePicker.ImagePickerAsset): Promise<Photo> {
-  if (Math.max(asset.width, asset.height) <= PHOTO_MAX_EDGE_PX) return { uri: asset.uri };
-  const size = asset.width >= asset.height ? { width: PHOTO_MAX_EDGE_PX } : { height: PHOTO_MAX_EDGE_PX };
-  const image = await ImageManipulator.manipulate(asset.uri).resize(size).renderAsync();
-  const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
-  return { uri: saved.uri };
-}
 
 /**
  * Litter log (D1-D7). Layout and copy follow Figma (Plog Design, node
@@ -125,7 +115,8 @@ export default function LitterLogScreen() {
     const result =
       source === 'camera' ? await ImagePicker.launchCameraAsync(options) : await ImagePicker.launchImageLibraryAsync(options);
     if (result.canceled) return;
-    setPhoto(await resizeToMaxEdge(result.assets[0]));
+    // Resized/re-encoded at upload (src/lib/photo-upload.ts), not here.
+    setPhoto({ uri: result.assets[0].uri });
   };
 
   const choosePhotoSource = () => {

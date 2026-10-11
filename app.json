@@ -7,10 +7,14 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.sonia-bbb.plog"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sonia-bbb.plog",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.soniabbb.plog",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -48,6 +52,14 @@
         "expo-media-library",
         {
           "savePhotosPermission": "Plog saves your Impact card to your photo library when you tap Download."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Plog uses your photo library so you can add a profile photo or a photo of the litter you collected.",
+          "cameraPermission": "Plog uses your camera so you can take a profile photo or a photo of the litter you collected.",
+          "microphonePermission": false
         }
       ]
     ],
