@@ -130,7 +130,11 @@ export default function ImpactCardScreen() {
         return;
       }
       const uri = await captureCard();
-      await MediaLibrary.saveToLibraryAsync(uri);
+      // saveToLibraryAsync is deprecated in this SDK version and actually
+      // throws now, not just warns — confirmed directly it was the reason
+      // Download silently failed. MediaLibrary.Asset.create is the
+      // class-based replacement.
+      await MediaLibrary.Asset.create(uri);
       Alert.alert('Saved to Photos');
     } catch (e) {
       console.error('[impact-card] download failed:', e);
