@@ -36,6 +36,9 @@ const POINTS_POLL_INTERVAL_MS = 2000;
 // C4's minimum session: under 1 minute or under 0.1 km cannot be saved.
 const MIN_SESSION_SEC = 60;
 const MIN_SESSION_KM = 0.1;
+// Stable reference, not an inline array literal — see impact-card.tsx's
+// SHARE_SHEET_SNAP_POINTS for why.
+const GUARD_SHEET_SNAP_POINTS = ['34%'];
 
 // The re-centre button needs to read clearly over a busy map, so it's solid
 // white + a real shadow here instead of CircleIconButton's default "glass"
@@ -401,8 +404,10 @@ export default function PlogScreen() {
               given) — confirmed on the Impact card's share sheet that
               dynamic sizing never resolves a height at all on this
               content, same root component, so fixed here too rather
-              than waiting to hit the identical bug. */}
-          <BottomSheet ref={finishSheetRef} snapPoints={['42%']}>
+              than waiting to hit the identical bug. 34%, not the
+              original 42% guess — confirmed directly that left too much
+              empty space below the Discard link. */}
+          <BottomSheet ref={finishSheetRef} snapPoints={GUARD_SHEET_SNAP_POINTS}>
             <Text style={styles.guardTitle}>Finished your plog session?</Text>
             <View style={styles.guardGrid}>
               <View style={styles.guardMetricColumn}>

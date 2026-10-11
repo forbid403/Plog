@@ -7,6 +7,8 @@ import { colors, spacing, typography } from '../theme';
 
 type TopBarBase = {
   title: string;
+  /** Light title text for dark backgrounds (Figma: Greyscale/Text/Negative). */
+  onDark?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -23,17 +25,20 @@ export type TopBarProps =
       onBackPress?: () => void;
       showRightIcon?: boolean;
       onMenuPress?: () => void;
+      /** Replaces the overflow menu, e.g. Impact card's `Done` button. */
+      right?: React.ReactNode;
     });
 
 /** Screen header (Figma: Plog Design System, node 257:91). */
 export default function TopBar(props: TopBarProps) {
   const insets = useSafeAreaInsets();
   const containerStyle = [styles.container, { paddingTop: insets.top + spacing.s }, props.style];
+  const titleStyle = [styles.title, props.onDark && styles.titleOnDark];
 
   if (props.depth === 1) {
     return (
       <View style={containerStyle}>
-        <Text style={styles.title}>{props.title}</Text>
+        <Text style={titleStyle}>{props.title}</Text>
         <Pressable
           disabled={!props.onAvatarPress}
           onPress={props.onAvatarPress}
@@ -54,8 +59,8 @@ export default function TopBar(props: TopBarProps) {
         onPress={props.onBackPress}
         icon={({ color, size }) => <CaretLeftIcon color={color} size={size} />}
       />
-      <Text style={[styles.title, styles.centeredTitle]}>{props.title}</Text>
-      {showRightIcon ? (
+      <Text style={[titleStyle, styles.centeredTitle]}>{props.title}</Text>
+      {props.right ?? (showRightIcon ? (
         <CircleIconButton
           accessibilityLabel="More"
           onPress={props.onMenuPress}
@@ -63,7 +68,7 @@ export default function TopBar(props: TopBarProps) {
         />
       ) : (
         <View style={styles.rightSpacer} />
-      )}
+      ))}
     </View>
   );
 }
@@ -86,6 +91,9 @@ const styles = StyleSheet.create({
     fontSize: typography.body.baseBold.fontSize,
     letterSpacing: typography.body.baseBold.letterSpacing,
     color: colors.greyScale['900'],
+  },
+  titleOnDark: {
+    color: colors.greyScale['50'],
   },
   centeredTitle: {
     position: 'absolute',

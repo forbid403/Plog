@@ -43,9 +43,24 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
     close: () => sheetRef.current?.close(),
   }));
 
+  // Always mounted (not conditionally undefined) — omitting it entirely
+  // for the non-dismissible case looked like it was also preventing the
+  // sheet from ever opening at all on the Impact card (confirmed
+  // directly: the only sheet using that path was the only one that
+  // never appeared). Transparent + non-interactive instead, so a fixed
+  // sheet doesn't dim the screen but the internal structure stays the
+  // same as the (working) dismissible case.
   const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} pressBehavior="close" />,
-    []
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior={dismissible ? 'close' : 'none'}
+        opacity={dismissible ? 0.5 : 0}
+      />
+    ),
+    [dismissible]
   );
 
   return (
@@ -56,10 +71,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
       enableDynamicSizing={!snapPoints}
       enablePanDownToClose={dismissible}
       onClose={onDismiss}
-      // A non-dismissible sheet is a fixed part of the screen (e.g.
-      // Impact card's always-open share sheet) — no dimming backdrop
-      // implying it can be tapped away.
-      backdropComponent={dismissible ? renderBackdrop : undefined}
+      backdropComponent={renderBackdrop}
       backgroundStyle={styles.background}
       handleStyle={styles.handleArea}
       handleIndicatorStyle={styles.handleIndicator}

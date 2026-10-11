@@ -22,6 +22,11 @@ import { formatDistanceKm, formatDuration, formatImpactCardDate, formatLiters } 
 import { colors, spacing, typography } from '../src/theme';
 
 const CARD_WIDTH = 320;
+// Stable reference — an inline array literal in JSX is a new object every
+// render, which gorhom's BottomSheet may treat as "snapPoints changed",
+// re-running its internal snap-point setup on every re-render of this
+// screen (e.g. from the capture/share state updates below).
+const SHARE_SHEET_SNAP_POINTS = ['32%'];
 // Figma's own pixel sizes for this card (Plog Design, node 681:1985) — not
 // on the spacing scale, same precedent as litter-log.tsx's bag/stepper sizes.
 const MAP_WIDTH = 184;
@@ -277,7 +282,7 @@ export default function ImpactCardScreen() {
           (the BottomSheet component's default with no snapPoints given)
           — confirmed directly the sheet never appeared at all with
           dynamic sizing, on this content, even well after mount. */}
-      <BottomSheet ref={shareSheetRef} showHandle={false} snapPoints={['32%']} dismissible={false}>
+      <BottomSheet ref={shareSheetRef} showHandle={false} snapPoints={SHARE_SHEET_SNAP_POINTS} dismissible={false}>
         <Text style={styles.shareTitle}>Share to</Text>
         <View style={styles.shareRow}>
           <ShareButton
