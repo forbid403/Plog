@@ -62,6 +62,13 @@
         }
       ]
     ],
-    "scheme": "plog"
+    "scheme": "plog",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "16b86460-ab33-46a3-9758-ed61c475b672"
+      }
+    },
+    "owner": "sonia_bbb"
   }
 }
