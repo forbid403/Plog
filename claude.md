@@ -108,6 +108,7 @@ liters  = round(fillRatio * bagSizeLiters, 1)
 - Unit-test everything in `src/lib/`, especially boundaries: 0 L, `<1%` bins, 0.99 → 1.0 km badge, 1:00 / 0.10 km minimum session, midnight and week boundaries.
 - E2E flows with Maestro under `e2e/`.
 - For GPS work: iOS Simulator location simulation (City Run) or GPX playback in the Android emulator — don't require a real walk to verify.
+- A fresh or erased iOS Simulator has **no location set**: `getCurrentPositionAsync` fails with `kCLErrorDomain error 0` and Home's weather card shows `Weather unavailable`. That's the simulator, not a bug — set **Features → Location → Custom Location** (e.g. Surry Hills `-33.8886, 151.2094`) or **City Run**, then leave and re-enter the screen.
 
 ## Scope: do what was asked, nothing more
 

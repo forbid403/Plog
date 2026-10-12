@@ -152,3 +152,19 @@ async function uploadSessionPhoto(sessionId: string, uri: string): Promise<strin
 
   return supabase.storage.from('session-photos').getPublicUrl(path).data.publicUrl;
 }
+
+export type SessionStart = {
+  startedAt: string;
+  timezone: string;
+};
+
+/**
+ * B3/B4 (Home streak + This Week): start time and stored time zone of every
+ * session the signed-in user has (RLS limits rows to them). Only these two
+ * columns, so it stays light even with a long history.
+ */
+export async function listSessionStarts(): Promise<SessionStart[]> {
+  const { data, error } = await supabase.from('sessions').select('started_at, timezone').order('started_at', { ascending: false });
+  if (error) throw error;
+  return data.map((row: { started_at: string; timezone: string }) => ({ startedAt: row.started_at, timezone: row.timezone }));
+}

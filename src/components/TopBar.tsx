@@ -1,5 +1,6 @@
-import { Image, Pressable, StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Avatar from './Avatar';
 import CircleIconButton from './CircleIconButton';
 import CaretLeftIcon from './icons/CaretLeftIcon';
 import DotsThreeVerticalIcon from './icons/DotsThreeVerticalIcon';
@@ -16,7 +17,8 @@ export type TopBarProps =
   | (TopBarBase & {
       /** Figma "1 Depth" — root screen: title + avatar. */
       depth: 1;
-      avatarSource: ImageSourcePropType;
+      /** Omit while loading or when the user has no photo — shows Avatar's empty state. */
+      avatarSource?: ImageSourcePropType;
       onAvatarPress?: () => void;
     })
   | (TopBarBase & {
@@ -39,13 +41,7 @@ export default function TopBar(props: TopBarProps) {
     return (
       <View style={containerStyle}>
         <Text style={titleStyle}>{props.title}</Text>
-        <Pressable
-          disabled={!props.onAvatarPress}
-          onPress={props.onAvatarPress}
-          accessibilityRole={props.onAvatarPress ? 'button' : undefined}
-        >
-          <Image source={props.avatarSource} style={styles.avatar} />
-        </Pressable>
+        <Avatar size="small" source={props.avatarSource} onPress={props.onAvatarPress} />
       </View>
     );
   }
@@ -106,13 +102,6 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: spacing.full,
-    borderWidth: 1,
-    borderColor: colors.greyScale['400'],
   },
   rightSpacer: {
     width: AVATAR_SIZE,
