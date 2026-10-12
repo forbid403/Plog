@@ -1,93 +1,84 @@
-# Pre-purchase checklist — before buying Apple/Google dev accounts
+# 수요일 계정 구매 전 체크리스트
 
-Written 2026-10-12. Goal: buy Apple Developer Program + Google Play Console
-on **Wednesday (2026-10-14)** and be able to move straight into submission —
-everything that doesn't require those paid accounts should already be done
-by then.
+작성: 2026-10-12. 목표: **수요일(2026-10-14)**에 Apple Developer Program +
+Google Play Console을 구매하고, 그 즉시 제출 단계로 넘어갈 수 있도록 — 계정이
+없어도 할 수 있는 일은 전부 그 전에 끝내둔다.
 
-Full post-purchase steps live in `docs/release-checklist.md` — this file is
-just the "what can happen before the money moves" subset, reordered by
-urgency.
+구매 이후 전체 절차는 `docs/release-checklist.md` 참고. 이 문서는 "돈 나가기
+전에 할 수 있는 것"만 긴급도 순으로 뽑아둔 서브셋.
 
-⚠️ **Reality check**: Google Play requires a new personal account to run a
-**closed test with 12+ testers for 14 consecutive days** before production
-release. Starting that Wednesday means the earliest possible production
-release is **2026-10-28**. Buy the Play Console account Wednesday regardless
-— the clock only starts once it exists, so delaying the purchase delays
-everything after it.
+⚠️ **현실 체크**: Google Play는 신규 개인 계정일 경우 프로덕션 배포 전에
+**테스터 12명 이상으로 14일 연속 closed testing**을 돌려야 함. 수요일에
+시작해도 가장 빠른 프로덕션 배포는 **2026-10-28**. 그래도 Play Console은
+수요일에 바로 사야 함 — 계정이 존재해야 타이머가 시작되므로, 구매를 미루면
+그만큼 전체 일정이 밀림.
 
-## Code work (no account needed)
+## 코드 작업 (계정 불필요)
 
-- [ ] Account deletion (DB rows + storage files + auth user) — **blocker**,
-      Apple 5.1.1(v) and Google both require it for an app with accounts;
-      not in the spec yet, needs designing from scratch
-- [ ] Background location: in-app Prominent Disclosure screen before the
-      permission prompt (Google review requirement)
-- [ ] Confirm `android.targetSdkVersion` meets Play's current minimum
-- [ ] Verify Impact card Download works on Android 13+ with the scoped-down
-      `expo-media-library` permissions (`granularPermissions: []`)
-- [ ] Remove dev `console.log`/`console.error` and placeholder debug copy
-- [ ] Lock MVP scope — confirm Copy Link / Instagram Story stay hidden on
-      the Impact card share sheet (already done) rather than half-finished
+- [ ] 계정 삭제 기능 (DB row + storage 파일 + auth 유저 삭제) — **핵심 블로커**.
+      Apple 5.1.1(v), Google 둘 다 계정 있는 앱에 필수로 요구함. 스펙에도 없어서
+      처음부터 설계해야 함
+- [ ] 백그라운드 위치 권한 요청 전 보여주는 Prominent Disclosure 화면 (Google 심사 필수)
+- [ ] `android.targetSdkVersion`이 Play 최신 요구 버전 맞는지 확인
+- [ ] Impact card Download가 안드로이드 13+에서 축소된 `expo-media-library`
+      권한(`granularPermissions: []`)으로도 되는지 확인
+- [ ] 개발용 `console.log`/`console.error`, 디버그용 placeholder 문구 정리
+- [ ] MVP 범위 확정 — Impact card 공유 시트에서 Copy Link / Instagram Story가
+      계속 숨겨져 있는지 확인 (이미 처리됨, 반쯤 만들다 만 상태로 남기지 않기)
 
-## Design assets (no account needed)
+## 디자인 에셋 (계정 불필요)
 
-- [ ] Real app icon + Android adaptive icon + splash screen (currently the
-      Expo template defaults)
-- [ ] Store screenshots — 6.9" iPhone size, Android phone size (can shoot
-      now, upload later once the store listings exist)
-- [ ] Play feature graphic (1024×500) + 512px icon
+- [ ] 실제 앱 아이콘 + 안드로이드 adaptive icon + 스플래시 화면 (지금은 Expo
+      기본 템플릿 그대로)
+- [ ] 스토어 스크린샷 — 6.9" iPhone 사이즈, 안드로이드 폰 사이즈 (촬영은 지금
+      가능, 업로드는 스토어 리스팅 생긴 다음에)
+- [ ] Play feature graphic (1024×500) + 512px 아이콘
 
-## Free external services (separate from the paid store accounts)
+## 무료 외부 서비스 (유료 스토어 계정과 별개)
 
-- [ ] Google Maps API key for Android — issued via **Google Cloud
-      Console**, free, unrelated to the $25 Play Console fee; restrict to
-      the package name + release SHA-1 once issued
-- [ ] Meta App ID — only if keeping Instagram Story sharing; free Facebook
-      Developer account
+- [ ] 안드로이드용 Google Maps API 키 — **Google Cloud Console**에서 발급,
+      무료, Play Console $25와 무관. 발급 후 패키지명 + 릴리즈 SHA-1로 제한 설정
+- [ ] Meta App ID — Instagram Story 공유 기능 유지할 경우에만 필요, Facebook
+      Developer 계정도 무료
 
-## Content/copy (no account needed)
+## 콘텐츠/문구 (계정 불필요)
 
-- [ ] Privacy policy page (free host — Notion, GitHub Pages, etc.)
-- [ ] Support URL / page
-- [ ] Draft App Store / Play review notes: anonymous sign-in means no demo
-      account needed; explain why background location recording is needed
-      and how to test it
-- [ ] Draft store listing copy: description, keywords, promotional text
+- [ ] Privacy policy 페이지 (무료 호스팅 — Notion, GitHub Pages 등)
+- [ ] Support URL / 페이지
+- [ ] App Store / Play 심사 노트 초안: 익명 로그인이라 데모 계정 불필요하다는
+      설명, 백그라운드 위치 추적이 왜 필요하고 어떻게 테스트하는지 설명
+- [ ] 스토어 리스팅 문구 초안: 설명, 키워드, 프로모션 텍스트
 
-## Testing (no account needed)
+## 테스트 (계정 불필요)
 
-- [ ] Full real-device run, 1+ iOS + 1+ Android: record → pause → finish →
-      Litter log → Impact card → share
-- [ ] First real Android run — only tested in the iOS Simulator so far
-- [ ] Force-quit mid-recording → confirm the session recovers on relaunch
-- [ ] Offline behavior (session save failure path)
-- [ ] Boundary cases: minimum session (<1 min / <0.1 km), 0 L session,
-      location permission denied
+- [ ] 실기기 풀 플로우 테스트, iOS 1대+ / 안드로이드 1대+: 기록 → 일시정지 →
+      종료 → Litter log → Impact card → 공유
+- [ ] 첫 실제 안드로이드 실행 — 지금까지 iOS 시뮬레이터로만 테스트함
+- [ ] 기록 중 강제종료 → 재실행 시 세션 복구되는지 확인
+- [ ] 오프라인 동작 (세션 저장 실패 경로)
+- [ ] 경계값 테스트: 최소 세션(1분 미만/0.1km 미만), 0L 세션, 위치 권한 거부
 
-## Can go ahead and build now (Android only)
+## 지금 빌드까지는 가능한 것 (안드로이드만)
 
-- [ ] `eas build` for Android **can** be signed and built without a Play
-      Console account — EAS manages its own keystore. Get this built and
-      sitting ready so Wednesday is just "create app → upload" instead of
-      "create app → wait for a build"
-- [ ] iOS production builds are blocked until Wednesday — code signing
-      needs an active Apple Developer membership, EAS build will fail
-      without it
+- [ ] 안드로이드 `eas build`는 Play Console 계정 없이도 서명/빌드 가능 — EAS가
+      자체 keystore로 관리함. 수요일에 "앱 생성 → 바로 업로드"가 되도록 미리
+      빌드해두기
+- [ ] iOS 프로덕션 빌드는 수요일까지 불가 — 코드 서명에 Apple Developer 멤버십이
+      필요해서 계정 없이는 EAS build 자체가 실패함
 
 ---
 
-## Blocked until the accounts exist (Wednesday)
+## 계정 생겨야만 가능한 것 (수요일 이후)
 
-- [ ] Apple Developer Program enrollment ($99/yr)
-- [ ] Google Play Console enrollment ($25 one-off) — **do this first**,
-      starts the 14-day closed-test clock
-- [ ] App Store Connect: create the app record
-- [ ] Google Play: create the app, start closed testing
-- [ ] iOS production build signing (needs Apple cert/profile)
-- [ ] App Privacy labels (App Store) / Data safety form (Play) — filled out
-      inside each console, can't be prepared outside it
-- [ ] Content rating questionnaire, age rating
-- [ ] Upload store listings (screenshots, descriptions — content from above
-      is ready, just needs the listing to exist first)
-- [ ] Location permission declarations + demo video upload (Play Console)
+- [ ] Apple Developer Program 가입 ($99/년)
+- [ ] Google Play Console 가입 ($25 1회) — **이걸 제일 먼저**, 14일 closed
+      testing 타이머가 여기서부터 시작됨
+- [ ] App Store Connect: 앱 레코드 생성
+- [ ] Google Play: 앱 생성, closed testing 시작
+- [ ] iOS 프로덕션 빌드 서명 (Apple 인증서/프로파일 필요)
+- [ ] App Privacy 라벨(App Store) / Data safety 폼(Play) — 각 콘솔 안에서만
+      작성 가능, 미리 준비 불가
+- [ ] 콘텐츠 등급 설문, 연령 등급
+- [ ] 스토어 리스팅 업로드 (스크린샷/설명 — 내용은 미리 준비해뒀으니 리스팅만
+      생기면 바로 업로드)
+- [ ] 위치 권한 선언 + 데모 영상 업로드 (Play Console)
