@@ -1,5 +1,5 @@
 export { supabase } from './supabase';
-export { signUp, signOut, getSession, getMyProfile } from './auth';
+export { signUp, signOut, getSession, getMyProfile, deleteAccount } from './auth';
 export type { Profile } from './auth';
 export { createSession, getSessionDetail, updateLitter } from './sessions';
 export type {

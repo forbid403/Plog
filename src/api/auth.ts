@@ -77,3 +77,44 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
+
+const STORAGE_BUCKETS = ['avatars', 'session-photos', 'impact-cards'] as const;
+
+/**
+ * Account deletion — required by Apple (5.1.1(v)) and Google Play for any
+ * app that creates accounts; not in the spec, built from scratch.
+ *
+ * Storage files are removed first, via the Storage API (not SQL — rows in
+ * storage.objects are just metadata, deleting them directly wouldn't
+ * remove the underlying file). Each bucket's upload convention is
+ * `{userId}/...` (see the storage_buckets migration), so listing that
+ * prefix finds everything this user ever uploaded.
+ *
+ * DB rows (profiles, sessions, user_badges) and the auth user itself are
+ * then deleted server-side by the delete_my_account() Postgres function
+ * (security definer — a plain client can't delete from auth.users
+ * directly), which also enforces that the caller can only ever delete
+ * their own row (reads auth.uid() itself, doesn't take an id argument).
+ *
+ * Signs out with `scope: 'local'` afterward — the server-side session is
+ * already gone along with the user, so there's nothing for a normal
+ * (server-round-trip) signOut() to invalidate; this just clears the
+ * locally cached token.
+ */
+export async function deleteAccount(): Promise<void> {
+  const session = await getSession();
+  if (!session) return;
+  const userId = session.user.id;
+
+  for (const bucket of STORAGE_BUCKETS) {
+    const { data: files } = await supabase.storage.from(bucket).list(userId);
+    if (files?.length) {
+      await supabase.storage.from(bucket).remove(files.map((f) => `${userId}/${f.name}`));
+    }
+  }
+
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+
+  await supabase.auth.signOut({ scope: 'local' });
+}
