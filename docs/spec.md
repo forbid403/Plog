@@ -75,13 +75,12 @@ Edit litter   Session detail → Log / Edit litter → Litter log (D8)
 
 | Permission | Used for | When to request [Proposed] |
 | --- | --- | --- |
-| Location (while in use) | Home weather, Plog session | Right after onboarding |
-| Location (background) | Recording with screen off | On first session Start |
+| Location (while in use) | Home weather, Plog session, recording with screen off | Right after onboarding |
 | Camera and photo library | Litter log photo | On tapping the photo area |
 | Save to photos | Impact card Download | On tapping Download |
 | Health data | Heart rate and calories | Out of MVP [Confirmed] |
 
-> Permissions are requested via `expo-location` (foreground and background), `expo-image-picker`, and `expo-media-library`. Background location requires iOS `UIBackgroundModes: location` and an Android foreground service in the app config (app.json), plus permission usage descriptions for store review (A3).
+> Permissions are requested via `expo-location` (while in use only), `expo-image-picker`, and `expo-media-library`. Background location requires iOS `UIBackgroundModes: location` and an Android foreground service in the app config (app.json), plus permission usage descriptions for store review (A3). No background ("Always" / `ACCESS_BACKGROUND_LOCATION`) permission: recording starts from the foreground on Start, so the foreground service / background mode keeps it running with only while-in-use permission. This also avoids Google Play's background location declaration and Apple's Always-permission review.
 
 ### 0.5 Platform and tech stack
 
@@ -112,7 +111,6 @@ Edit litter   Session detail → Log / Edit litter → Litter log (D8)
 - Apple Developer Program and Google Play Console accounts (tester distribution and release)
 - Google Maps API key for Android
 - Meta (Facebook) app ID (Instagram Stories sharing)
-- Background location usage justification (store review)
 
 ---
 

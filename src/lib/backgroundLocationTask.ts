@@ -53,18 +53,16 @@ TaskManager.defineTask<BackgroundLocationTaskData>(BACKGROUND_LOCATION_TASK, asy
   }
 });
 
-/** Requests background permission (spec 0.4: "on first session Start") and starts the task. */
+/**
+ * Starts the task (spec 0.4). Needs only while-in-use permission: started
+ * from the foreground on Start, it keeps running with the screen off via
+ * the Android foreground service / iOS `UIBackgroundModes: location`. No
+ * background ("Always") permission — that would trigger Play's background
+ * location declaration and Apple's Always-permission review for nothing.
+ */
 export async function startBackgroundLocationTracking(): Promise<void> {
   const alreadyStarted = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
   if (alreadyStarted) return;
-
-  const { status } = await Location.requestBackgroundPermissionsAsync();
-  if (status !== 'granted') {
-    // Foreground-only fallback: the OS just won't keep delivering updates
-    // once backgrounded. Not throwing — recording can still proceed in
-    // the foreground, which is better than blocking Start entirely.
-    console.warn('[plog] background location permission not granted — recording will pause when backgrounded');
-  }
 
   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
     accuracy: Location.Accuracy.BestForNavigation,
