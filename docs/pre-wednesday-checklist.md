@@ -18,13 +18,23 @@ Google Play Console을 구매하고, 그 즉시 제출 단계로 넘어갈 수 �
 - [x] 계정 삭제 기능 (DB row + storage 파일 + auth 유저 삭제) — 구현 완료,
       로컬+호스팅 둘 다 실제로 업로드→삭제→확인까지 end-to-end 테스트함.
       My 탭이 아직 없어서 버튼만 bare하게 박아둔 상태 (`app/(tabs)/my.tsx`)
-- [ ] 백그라운드 위치 권한 요청 전 보여주는 Prominent Disclosure 화면 (Google 심사 필수)
-- [ ] `android.targetSdkVersion`이 Play 최신 요구 버전 맞는지 확인
-- [ ] Impact card Download가 안드로이드 13+에서 축소된 `expo-media-library`
-      권한(`granularPermissions: []`)으로도 되는지 확인
-- [ ] 개발용 `console.log`/`console.error`, 디버그용 placeholder 문구 정리
-- [ ] MVP 범위 확정 — Impact card 공유 시트에서 Copy Link / Instagram Story가
-      계속 숨겨져 있는지 확인 (이미 처리됨, 반쯤 만들다 만 상태로 남기지 않기)
+- [x] ~~백그라운드 위치 Prominent Disclosure 화면~~ — 불필요해짐: `app.json`/
+      `backgroundLocationTask.ts`가 이미 "Always" 권한을 아예 안 받는 방식으로
+      바뀌어 있었음 (while-in-use 권한 + foreground service만으로 화면 꺼진
+      상태에서도 기록 계속). 이 화면은 `ACCESS_BACKGROUND_LOCATION` 선언하는
+      앱한테만 필요한데, 이 앱은 그 권한 자체를 선언 안 함
+- [x] `android.targetSdkVersion` 확인 — `npx expo prebuild --platform android`
+      빌드해서 직접 확인: `targetSdk 36` (Android 16), Play 요구 버전보다
+      충분히 높음. gitignore된 `android/` 폴더는 검증용, 커밋 안 함
+- [x] Impact card Download 코드 재검토 — `requestPermissionsAsync(true)`
+      (write-only 요청) + `MediaLibrary.Asset.create()` (scoped storage용
+      신규 API) 조합이 `granularPermissions: []`랑 로직상 맞음. 단, 이 환경에
+      안드로이드 에뮬레이터가 없어서 런타임 검증은 못 함 — 실기기 테스트 때 필요
+- [x] `console.log`/`console.error` 전수 조사 — 전부 `catch` 블록 안의 정상적인
+      에러 로깅(`console.error`)이고 디버그용 `console.log`는 하나도 없음.
+      정리할 게 없었음
+- [x] MVP 범위 확인 — Copy Link / Instagram Story 둘 다 `app/impact-card.tsx`
+      에서 아예 숨겨져 있는 거 코드로 확인함 (주석에 "Hidden for release" 명시)
 
 ## 디자인 에셋 (계정 불필요)
 
@@ -45,9 +55,9 @@ Google Play Console을 구매하고, 그 즉시 제출 단계로 넘어갈 수 �
 
 - [ ] Privacy policy 페이지 (무료 호스팅 — Notion, GitHub Pages 등)
 - [ ] Support URL / 페이지
-- [ ] App Store / Play 심사 노트 초안: 익명 로그인이라 데모 계정 불필요하다는
-      설명, 백그라운드 위치 추적이 왜 필요하고 어떻게 테스트하는지 설명
-- [ ] 스토어 리스팅 문구 초안: 설명, 키워드, 프로모션 텍스트
+- [x] App Store / Play 심사 노트 초안 — `docs/store-listing-draft.md`에 포함
+- [x] 스토어 리스팅 문구 초안 — `docs/store-listing-draft.md` (설명, 키워드,
+      프로모션 텍스트, 심사 노트까지). 최종 제출 전에 검수 필요, 1차 초안임
 
 ## 테스트 (계정 불필요)
 

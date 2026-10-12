@@ -61,11 +61,33 @@ found in this repo" table before relying on it — items may have been fixed.
 - [ ] Verify Impact card **Download** still works on Android 13+ without those read permissions (real device / emulator)
 - [ ] Confirm the build meets Play's required targetSdk (API level)
 
-## 4. Background location (biggest review risk)
+## 4. Background location (biggest review risk — mostly defused)
 
-- [ ] **Google**: in-app Prominent Disclosure screen before requesting background location; location permissions declaration form in Play Console (needs a demo **video link**); foreground service type (location) declaration
-- [ ] **Apple**: review notes explaining why the route must keep recording with the screen off, and how to test it; request "Always" only when needed (spec 0.4: on first Start)
+Architecture already changed (`app.json`, `src/lib/backgroundLocationTask.ts`):
+the app only ever requests **while-in-use** location, never "Always"/
+`ACCESS_BACKGROUND_LOCATION`. Recording keeps going with the screen off via
+iOS's `UIBackgroundModes: location` + Android's foreground service — both
+work on while-in-use permission alone, since tracking only continues while
+a session the user actively started is still running. This sidesteps
+Google's heavy background-location review category (Prominent Disclosure
+screen, declaration form, demo video) entirely — that's specifically
+triggered by declaring `ACCESS_BACKGROUND_LOCATION`, which this app no
+longer does.
+
+- [x] Confirmed `isAndroidBackgroundLocationEnabled: false`, no
+      `locationAlwaysAndWhenInUsePermission` in `app.json` — only
+      `locationWhenInUsePermission` is requested
+- [ ] **Google**: still needs the foreground service type (location)
+      declaration in Play Console — lighter than the full background
+      location policy, no demo video needed
+- [ ] **Apple**: review notes explaining the foreground-service-equivalent
+      (background mode) approach and how to test it — no "Always" request
+      to explain since the app never asks for it
 - [ ] Test background-permission-denied behaviour on a real device (open in todo)
+- [ ] Re-verify recording actually survives the screen being off / app
+      backgrounded on a **real device** with this while-in-use-only setup
+      (prior verification in this app's history was Simulator-only, from
+      before this architecture change)
 
 ## 5. Feature completeness and QA
 
