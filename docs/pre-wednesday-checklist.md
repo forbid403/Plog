@@ -15,9 +15,9 @@ Google Play Console을 구매하고, 그 즉시 제출 단계로 넘어갈 수 �
 
 ## 코드 작업 (계정 불필요)
 
-- [ ] 계정 삭제 기능 (DB row + storage 파일 + auth 유저 삭제) — **핵심 블로커**.
-      Apple 5.1.1(v), Google 둘 다 계정 있는 앱에 필수로 요구함. 스펙에도 없어서
-      처음부터 설계해야 함
+- [x] 계정 삭제 기능 (DB row + storage 파일 + auth 유저 삭제) — 구현 완료,
+      로컬+호스팅 둘 다 실제로 업로드→삭제→확인까지 end-to-end 테스트함.
+      My 탭이 아직 없어서 버튼만 bare하게 박아둔 상태 (`app/(tabs)/my.tsx`)
 - [ ] 백그라운드 위치 권한 요청 전 보여주는 Prominent Disclosure 화면 (Google 심사 필수)
 - [ ] `android.targetSdkVersion`이 Play 최신 요구 버전 맞는지 확인
 - [ ] Impact card Download가 안드로이드 13+에서 축소된 `expo-media-library`

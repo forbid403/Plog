@@ -8,7 +8,7 @@ found in this repo" table before relying on it — items may have been fixed.
 | # | Issue | Evidence |
 |---|---|---|
 | 1 | **App icon is the Expo default** | `assets/icon.png` is the Expo template image; Android adaptive icon background `#E6F4FE` is the template default too |
-| 2 | **No account deletion** | Accounts are created (anonymous sign-in + profile), so Apple (5.1.1(v)) and Google both require in-app account deletion. Not in the spec either |
+| 2 | ~~No account deletion~~ | Fixed: `delete_my_account()` (security-definer Postgres function, deletes auth.users -> cascades profiles/sessions/user_badges) + storage file cleanup (the original storage_buckets migration had never added delete policies at all, fixed alongside this), wired via `deleteAccount()` in `src/api/auth.ts`, bare UI on the My tab placeholder. Verified end-to-end against local dev and the hosted project |
 | 3 | **No Android Google Maps key** | Wired (2026-10-11): `app.config.ts` reads `GOOGLE_MAPS_ANDROID_API_KEY` — the key itself still needs issuing and setting in `.env` / EAS env vars |
 | 4 | ~~No Android package name~~ | Fixed: `com.soniabbb.plog` (hyphens aren't allowed; iOS stays `com.sonia-bbb.plog`) |
 | 5 | ~~EAS config~~ | Fixed: `eas init` run (`@sonia_bbb/plog`, project ID in `app.json`) |
@@ -44,7 +44,7 @@ found in this repo" table before relying on it — items may have been fixed.
 - [x] Re-verify RLS on the production DB — verified directly: two separate anonymous users, cross-user session read/insert/profile-edit and cross-user storage upload all blocked (RLS policy violation), own-user reads/writes/uploads all succeed
 - [x] Anonymous sign-in was **disabled by default** on the hosted project (`config.toml`'s `enable_anonymous_sign_ins = true` only applies to local dev, not automatically to a hosted project) — fixed via `supabase config push`, confirmed working
 - [ ] Anonymous sign-in abuse protection (Supabase CAPTCHA / rate limits) — not addressed by the above, separate item
-- [ ] Account deletion: DB rows + storage files + auth user (blocker #2)
+- [x] Account deletion: DB rows + storage files + auth user (blocker #2)
 - [x] Strip EXIF before upload — always re-encode the photo (blocker #8)
 
 ## 3. App config (`app.json` / EAS)
