@@ -11,8 +11,8 @@ found in this repo" table before relying on it — items may have been fixed.
 | 2 | **No account deletion** | Accounts are created (anonymous sign-in + profile), so Apple (5.1.1(v)) and Google both require in-app account deletion. Not in the spec either |
 | 3 | **No Android Google Maps key** | Wired (2026-10-11): `app.config.ts` reads `GOOGLE_MAPS_ANDROID_API_KEY` — the key itself still needs issuing and setting in `.env` / EAS env vars |
 | 4 | ~~No Android package name~~ | Fixed: `com.soniabbb.plog` (hyphens aren't allowed; iOS stays `com.sonia-bbb.plog`) |
-| 5 | **EAS config** | `eas.json` added; still need `eas init` (Expo login, writes the project ID) |
-| 6 | **Backend is local-only** | Supabase points at `127.0.0.1`; no hosted project linked |
+| 5 | ~~EAS config~~ | Fixed: `eas init` run (`@sonia_bbb/plog`, project ID in `app.json`) |
+| 6 | ~~Backend is local-only~~ | Fixed: hosted project linked (`nqkjnhkbckodyjhlgzul`), migrations + seed pushed, anonymous sign-in enabled (was off by default on the hosted project — `supabase config push`), RLS + storage policies verified (cross-user read/write/upload all blocked, own-user operations all succeed) |
 | 7 | ~~iPad support on~~ | Fixed: `supportsTablet: false` |
 | 8 | ~~Photo location leak risk~~ | Fixed: every upload (litter photo, avatar) is re-encoded first (`src/lib/photo-upload.ts`), which strips EXIF |
 | 9 | **Android never run** | Open in `docs/todo-plog-session.md` (C3.1); background location not tested on a real device either |
@@ -26,20 +26,31 @@ found in this repo" table before relying on it — items may have been fixed.
 - [ ] Google Maps API key for Android (restrict to package name + SHA-1)
 - [ ] Meta App ID (if keeping Instagram Story sharing)
 - [ ] Privacy policy URL and Support URL (both stores require them)
+- [ ] **Domain — not needed to ship the app itself.** App Store/Play
+      Store don't require one; `*.supabase.co` is fine for the backend
+      permanently (a custom API domain is an optional paid Supabase add-on,
+      never required). It only becomes relevant for two *separate*, not-yet-built
+      pieces: (a) the Privacy policy/Support URLs above — can be hosted free
+      (GitHub Pages, Notion, etc.), a purchased domain is just nicer branding;
+      (b) spec E4's public card web page (`https://{domain}/c/{cardId}`),
+      [Proposed] and explicitly deferred — Copy Link is currently a no-op
+      specifically because this doesn't exist yet. Buy a domain only once (b)
+      is actually being built
 
 ## 2. Backend (Supabase)
 
-- [ ] Create hosted project → `supabase link` → `supabase db push` (migrations)
-- [ ] Production `EXPO_PUBLIC_SUPABASE_URL` / anon key as EAS environment variables
-- [ ] Re-verify RLS on the production DB (no cross-user read/write)
-- [ ] Anonymous sign-in abuse protection (Supabase CAPTCHA / rate limits)
+- [x] Create hosted project → `supabase link` → `supabase db push` (migrations)
+- [x] Production `EXPO_PUBLIC_SUPABASE_URL` / anon key as EAS environment variables (`preview` + `production`)
+- [x] Re-verify RLS on the production DB — verified directly: two separate anonymous users, cross-user session read/insert/profile-edit and cross-user storage upload all blocked (RLS policy violation), own-user reads/writes/uploads all succeed
+- [x] Anonymous sign-in was **disabled by default** on the hosted project (`config.toml`'s `enable_anonymous_sign_ins = true` only applies to local dev, not automatically to a hosted project) — fixed via `supabase config push`, confirmed working
+- [ ] Anonymous sign-in abuse protection (Supabase CAPTCHA / rate limits) — not addressed by the above, separate item
 - [ ] Account deletion: DB rows + storage files + auth user (blocker #2)
 - [x] Strip EXIF before upload — always re-encode the photo (blocker #8)
 
 ## 3. App config (`app.json` / EAS)
 
 - [x] Write `eas.json` (development / preview / production profiles)
-- [ ] `eas init` (needs Expo login)
+- [x] `eas init` — `@sonia_bbb/plog`, project ID written to `app.json`
 - [x] Set `android.package` — can't change after release
 - [x] `ios.config.usesNonExemptEncryption: false` (skips export compliance question)
 - [x] Versioning: EAS `autoIncrement` for build number / versionCode
