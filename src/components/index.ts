@@ -60,3 +60,8 @@ export { default as LinkIcon } from './icons/LinkIcon';
 export type { LinkIconProps } from './icons/LinkIcon';
 export { default as DownloadSimpleIcon } from './icons/DownloadSimpleIcon';
 export type { DownloadSimpleIconProps } from './icons/DownloadSimpleIcon';
+export { default as UmbrellaIcon } from './icons/UmbrellaIcon';
+export type { UmbrellaIconProps } from './icons/UmbrellaIcon';
+export { default as FlameIcon } from './icons/FlameIcon';
+export type { FlameIconProps } from './icons/FlameIcon';
+export { default as DashboardGlow } from './DashboardGlow';

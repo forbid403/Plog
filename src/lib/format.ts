@@ -44,3 +44,23 @@ export function formatLiters(liters: number): string {
   const rounded = Math.round(liters * 10) / 10;
   return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} L`;
 }
+
+/** Streak value (B3): `1 day`, `5 days`. */
+export function formatStreakDays(days: number): string {
+  return `${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
+/** Weather temperature (B2): integer `°C`, e.g. `12°C`. */
+export function formatTemperatureC(tempC: number): string {
+  const rounded = Math.round(tempC);
+  return `${rounded === 0 ? 0 : rounded}°C`;
+}
+
+/**
+ * Expected rainfall (B2): `0mm` when none. Same 1-decimal-dropped-when-whole
+ * rule as litres (0.2) so light drizzle reads `0.4mm`, not a misleading `0mm`.
+ */
+export function formatPrecipitationMm(mm: number): string {
+  const rounded = Math.round(Math.max(0, mm) * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}mm`;
+}
