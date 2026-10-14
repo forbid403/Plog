@@ -4,7 +4,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as MediaLibrary from 'expo-media-library';
 import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 import Share, { Social } from 'react-native-share';
-import MapView, { Polyline, type Region } from 'react-native-maps';
+import MapView, { Polyline } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getSessionDetail, type RoutePoint, type SessionDetail } from '../src/api/sessions';
 import {
@@ -17,6 +17,7 @@ import {
   type BottomSheetHandle,
 } from '../src/components';
 import { formatDistanceKm, formatDuration, formatImpactCardDate, formatLiters } from '../src/lib/format';
+import { regionForPoints } from '../src/lib/map-region';
 import { colors, spacing, typography } from '../src/theme';
 
 const CARD_WIDTH = 320;
@@ -50,29 +51,6 @@ const cardGlowStyle = {
 // opaque hex since there's nothing beneath this screen to show through.
 const DARK_GREEN_BG = '#0c4b1f';
 
-function regionForRoute(points: { lat: number; lng: number }[]): Region {
-  if (points.length === 0) {
-    return { latitude: -33.8688, longitude: 151.2093, latitudeDelta: 0.01, longitudeDelta: 0.01 };
-  }
-  let minLat = Infinity;
-  let maxLat = -Infinity;
-  let minLng = Infinity;
-  let maxLng = -Infinity;
-  for (const p of points) {
-    minLat = Math.min(minLat, p.lat);
-    maxLat = Math.max(maxLat, p.lat);
-    minLng = Math.min(minLng, p.lng);
-    maxLng = Math.max(maxLng, p.lng);
-  }
-  const latSpan = Math.max(maxLat - minLat, 0.002);
-  const lngSpan = Math.max(maxLng - minLng, 0.002);
-  return {
-    latitude: (minLat + maxLat) / 2,
-    longitude: (minLng + maxLng) / 2,
-    latitudeDelta: latSpan * 1.4,
-    longitudeDelta: lngSpan * 1.4,
-  };
-}
 
 function shareText(liters: number | null): string {
   // Spec's own example copy (E4), not a literal spec string — liters is
@@ -209,7 +187,7 @@ export default function ImpactCardScreen() {
             <View style={styles.mapFrame}>
               <MapView
                 style={StyleSheet.absoluteFill}
-                initialRegion={regionForRoute(route)}
+                initialRegion={regionForPoints(route)}
                 scrollEnabled={false}
                 zoomEnabled={false}
                 pitchEnabled={false}
