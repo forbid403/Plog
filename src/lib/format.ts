@@ -64,3 +64,14 @@ export function formatPrecipitationMm(mm: number): string {
   const rounded = Math.round(Math.max(0, mm) * 10) / 10;
   return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}mm`;
 }
+
+/** Route distance (B5): 1 decimal place, omitted when whole — `9.4 km`, `10 km`. */
+export function formatRouteDistanceKm(km: number): string {
+  const rounded = Math.round(km * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} km`;
+}
+
+/** Elevation gain (B5): whole metres, `67m`. */
+export function formatElevationM(meters: number): string {
+  return `${Math.round(meters)}m`;
+}

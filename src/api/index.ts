@@ -12,3 +12,4 @@ export type {
 } from './sessions';
 export { getLocalWeather } from './weather';
 export type { LocalWeather } from './weather';
+export { listRoutes } from './routes';

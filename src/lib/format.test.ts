@@ -1,10 +1,12 @@
 import {
   formatDistanceKm,
   formatDuration,
+  formatElevationM,
   formatImpactCardDate,
   formatLiters,
   formatPace,
   formatPrecipitationMm,
+  formatRouteDistanceKm,
   formatStreakDays,
   formatTemperatureC,
 } from './format';
@@ -71,4 +73,14 @@ describe('formatPrecipitationMm', () => {
   it('shows 0mm when none', () => expect(formatPrecipitationMm(0)).toBe('0mm'));
   it('drops the decimal when whole', () => expect(formatPrecipitationMm(3)).toBe('3mm'));
   it('keeps 1 decimal otherwise', () => expect(formatPrecipitationMm(0.44)).toBe('0.4mm'));
+});
+
+describe('formatRouteDistanceKm', () => {
+  it('keeps 1 decimal', () => expect(formatRouteDistanceKm(9.43)).toBe('9.4 km'));
+  it('drops the decimal when whole', () => expect(formatRouteDistanceKm(10)).toBe('10 km'));
+  it('rounds up to a whole number', () => expect(formatRouteDistanceKm(9.96)).toBe('10 km'));
+});
+
+describe('formatElevationM', () => {
+  it('rounds to whole metres', () => expect(formatElevationM(66.6)).toBe('67m'));
 });

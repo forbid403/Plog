@@ -4,11 +4,12 @@ import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getLocalWeather, getMyProfile, listSessionStarts, type LocalWeather, type SessionStart } from '../../src/api';
-import { DashboardGlow, FlameIcon, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
+import { getLocalWeather, getMyProfile, listRoutes, listSessionStarts, type LocalWeather, type SessionStart } from '../../src/api';
+import { Chip, DashboardGlow, FlameIcon, RouteCard, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { formatPrecipitationMm, formatStreakDays, formatTemperatureC } from '../../src/lib/format';
 import { hasCompletedOnboarding } from '../../src/lib/onboardingStorage';
+import { pickRecommendedRoutes, type LatLng, type RecommendedRoute, type RouteFilter } from '../../src/lib/routes';
 import { computeCurrentStreak, computeThisWeek, localDateKey, type WeekDay } from '../../src/lib/streak';
 import { colors, spacing, typography } from '../../src/theme';
 
@@ -18,6 +19,15 @@ type WeatherState =
   | { kind: 'no-permission' }
   | { kind: 'error' };
 
+type PositionResult = { kind: 'granted'; coords: LatLng } | { kind: 'no-permission' } | { kind: 'error' };
+
+// Figma chip labels (spec B5 calls them Turnaround / One way).
+const ROUTE_FILTERS: { key: RouteFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'loop', label: 'Loop' },
+  { key: 'one_way', label: 'One-way' },
+];
+
 const WEEKDAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 // Floating tab bar footprint (app/(tabs)/_layout.tsx): sits `insets.bottom + 16`
@@ -25,7 +35,7 @@ const WEEKDAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 // scrolls clear of it, plus Figma's 32 section gap.
 const TAB_BAR_CLEARANCE = spacing.l + 66 + spacing['3xl'];
 
-/** Home (spec Part B; Figma: Plog Design, node 562:4408). Recommended Routes (B5) not built yet. */
+/** Home (spec Part B; Figma: Plog Design, node 562:4408). */
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -34,6 +44,9 @@ export default function HomeScreen() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionStart[] | null>(null);
   const [weather, setWeather] = useState<WeatherState>({ kind: 'loading' });
+  const [position, setPosition] = useState<PositionResult | null>(null);
+  const [routes, setRoutes] = useState<RecommendedRoute[] | null>(null);
+  const [routeFilter, setRouteFilter] = useState<RouteFilter>('all');
 
   // A2: onboarding is shown once per install, gated here since Home is
   // this app's actual entry point (no separate root index route — see
@@ -72,7 +85,16 @@ export default function HomeScreen() {
         .then((rows) => !cancelled && setSessions(rows))
         .catch((e) => console.error('[home] sessions load failed:', e));
 
-      loadWeather().then((next) => !cancelled && setWeather(next));
+      listRoutes()
+        .then((rows) => !cancelled && setRoutes(rows))
+        .catch((e) => console.error('[home] routes load failed:', e));
+
+      loadPosition().then(async (pos) => {
+        if (cancelled) return;
+        setPosition(pos);
+        const next = await loadWeather(pos);
+        if (!cancelled) setWeather(next);
+      });
 
       return () => {
         cancelled = true;
@@ -86,6 +108,7 @@ export default function HomeScreen() {
   const todayKey = localDateKey(new Date().toISOString(), deviceTimeZone);
   const streak = sessions ? computeCurrentStreak(sessions, todayKey) : null;
   const week = sessions ? computeThisWeek(sessions, todayKey, deviceTimeZone) : null;
+  const nearbyRoutes = routes && position?.kind === 'granted' ? pickRecommendedRoutes(routes, position.coords, routeFilter) : null;
 
   return (
     <ScrollView
@@ -130,11 +153,36 @@ export default function HomeScreen() {
           </GlassCard>
         </View>
       </View>
+
+      {/* B5 [Proposed]: hidden without location permission (nothing to sort by). */}
+      {nearbyRoutes && (
+        <View style={styles.routesSection}>
+          <Text style={[textStyle(typography.titles.medium), styles.titleText]}>Recommended Routes</Text>
+          <View style={styles.chips}>
+            {ROUTE_FILTERS.map(({ key, label }) => (
+              <Chip key={key} label={label} size="small" selected={routeFilter === key} onPress={() => setRouteFilter(key)} />
+            ))}
+          </View>
+          {nearbyRoutes.length === 0 ? (
+            <Text style={[textStyle(typography.body.small), styles.subtitleText]}>No routes nearby</Text>
+          ) : (
+            <>
+              <View style={styles.routeGrid}>
+                {nearbyRoutes.map((route) => (
+                  <RouteCard key={route.id} route={route} style={styles.routeCard} />
+                ))}
+              </View>
+              {/* Required by the OSM data licence (ODbL) — routes come from OpenStreetMap. */}
+              <Text style={[textStyle(typography.caption), styles.subtitleText]}>Route data © OpenStreetMap contributors</Text>
+            </>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
 
-async function loadWeather(): Promise<WeatherState> {
+async function loadPosition(): Promise<PositionResult> {
   try {
     let permission = await Location.getForegroundPermissionsAsync();
     // 0.4: location is first requested right after onboarding, i.e. here.
@@ -146,7 +194,19 @@ async function loadWeather(): Promise<WeatherState> {
     const position =
       (await Location.getLastKnownPositionAsync()) ??
       (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
-    return { kind: 'ready', weather: await getLocalWeather(position.coords) };
+    return { kind: 'granted', coords: { lat: position.coords.latitude, lng: position.coords.longitude } };
+  } catch (e) {
+    // e.g. a fresh iOS Simulator with no location set (see README)
+    console.error('[home] location unavailable:', e);
+    return { kind: 'error' };
+  }
+}
+
+async function loadWeather(position: PositionResult): Promise<WeatherState> {
+  if (position.kind === 'no-permission') return { kind: 'no-permission' };
+  if (position.kind === 'error') return { kind: 'error' };
+  try {
+    return { kind: 'ready', weather: await getLocalWeather({ latitude: position.coords.lat, longitude: position.coords.lng }) };
   } catch (e) {
     console.error('[home] weather load failed:', e);
     return { kind: 'error' };
@@ -233,6 +293,24 @@ const WEATHER_CARD_FLEX = 193;
 const STREAK_CARD_FLEX = 153;
 
 const styles = StyleSheet.create({
+  routesSection: {
+    paddingHorizontal: spacing['2xl'],
+    paddingTop: spacing['3xl'],
+    gap: spacing.l,
+  },
+  chips: {
+    flexDirection: 'row',
+    gap: spacing.s,
+  },
+  routeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.m,
+  },
+  routeCard: {
+    // 2 columns with the 12 gap between them (Figma: 170 + 12 + 170 of 354)
+    width: '48%',
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.base.white,

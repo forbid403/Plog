@@ -65,3 +65,5 @@ export type { UmbrellaIconProps } from './icons/UmbrellaIcon';
 export { default as FlameIcon } from './icons/FlameIcon';
 export type { FlameIconProps } from './icons/FlameIcon';
 export { default as DashboardGlow } from './DashboardGlow';
+export { default as RouteCard } from './RouteCard';
+export type { RouteCardProps } from './RouteCard';
