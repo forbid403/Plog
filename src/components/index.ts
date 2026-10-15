@@ -91,5 +91,5 @@ export { default as MonthlyLitterChart } from './MonthlyLitterChart';
 export type { MonthlyLitterChartProps } from './MonthlyLitterChart';
 export { default as DropdownMenu } from './DropdownMenu';
 export type { DropdownMenuProps, DropdownAnchor } from './DropdownMenu';
-export { default as GlassSurface } from './GlassSurface';
+export { default as GlassSurface, LIQUID_GLASS_AVAILABLE } from './GlassSurface';
 export type { GlassSurfaceProps } from './GlassSurface';

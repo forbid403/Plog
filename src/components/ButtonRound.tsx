@@ -1,5 +1,5 @@
-import { BlurView } from 'expo-blur';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import GlassSurface from './GlassSurface';
 import CaretDownIcon from './icons/CaretDownIcon';
 import { colors, shadows, spacing, typography } from '../theme';
 import { shadowLayerToStyle } from '../lib/shadow';
@@ -106,11 +106,11 @@ export default function ButtonRound({
   const containerStyle: ViewStyle = { width: dims.container, height: dims.container, borderRadius: spacing.full };
 
   if (variant === 'glass') {
-    // Same fix as Button.tsx's glass variant: BlurView+Pressable both
-    // flex:1 (nested, nothing else sizing them) left Text/icon content
+    // Same fix as Button.tsx's glass variant: a flex:1 blur layer around
+    // Pressable (nested, nothing else sizing them) left Text/icon content
     // with no resolvable box — rendered as an empty circle. The Pressable
-    // now gets the real size directly; BlurView is an absolutely-filled
-    // backdrop layer instead of a flex ancestor.
+    // gets the real size directly; the glass (GlassSurface) is an
+    // absolutely-filled backdrop layer instead of a flex ancestor.
     return (
       <Pressable
         onPress={onPress}
@@ -120,8 +120,9 @@ export default function ButtonRound({
         accessibilityState={{ disabled }}
         style={[styles.centered, containerStyle, styles.clip, glassShadowStyle, disabled && styles.disabledOpacity, style]}
       >
-        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
-        <View style={[styles.centered, StyleSheet.absoluteFill, { backgroundColor: palette.background }]}>{content}</View>
+        <GlassSurface style={StyleSheet.absoluteFill} />
+        {/* GlassSurface already carries the glass tint; only the disabled grey goes on top. */}
+        <View style={[styles.centered, StyleSheet.absoluteFill, disabled && { backgroundColor: palette.background }]}>{content}</View>
       </Pressable>
     );
   }

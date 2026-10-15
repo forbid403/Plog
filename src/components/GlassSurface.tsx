@@ -8,16 +8,18 @@ export type GlassSurfaceProps = {
   children?: React.ReactNode;
 };
 
-// Checked once: the answer can't change while the app runs.
-const LIQUID_GLASS = isLiquidGlassAvailable();
+/** True on iOS 26+ (Liquid Glass). Checked once: it can't change while the app runs. */
+export const LIQUID_GLASS_AVAILABLE = isLiquidGlassAvailable();
 
 /**
- * Figma "glass" surfaces. iOS 26+: Apple's own Liquid Glass (expo-glass-effect).
+ * Figma "glass" surfaces (Glass_Button effect, glass top bar). Use as a
+ * wrapper, or with `StyleSheet.absoluteFill` as a backdrop layer behind
+ * content. iOS 26+: Apple's own Liquid Glass (expo-glass-effect).
  * Android and older iOS: the blur + translucent white the app already uses
  * for Glass_Button and the tab bar (Button.tsx, BottomNavigation.tsx).
  */
 export default function GlassSurface({ style, children }: GlassSurfaceProps) {
-  if (LIQUID_GLASS) {
+  if (LIQUID_GLASS_AVAILABLE) {
     // 'clear' = Apple's lighter, less frosted glass (product choice 2026-10-15).
     return (
       <GlassView glassEffectStyle="clear" style={style}>

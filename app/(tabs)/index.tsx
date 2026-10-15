@@ -5,7 +5,7 @@ import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getLocalWeather, getMyProfile, listRoutes, listSessionStarts, type LocalWeather, type SessionStart } from '../../src/api';
-import { Chip, DashboardGlow, FlameIcon, RouteCard, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
+import { Chip, DashboardGlow, FlameIcon, GlassSurface, RouteCard, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { formatPrecipitationMm, formatStreakDays, formatTemperatureC } from '../../src/lib/format';
 import { hasCompletedOnboarding } from '../../src/lib/onboardingStorage';
@@ -13,11 +13,7 @@ import { pickRecommendedRoutes, type LatLng, type RecommendedRoute, type RouteFi
 import { computeCurrentStreak, computeThisWeek, localDateKey, type WeekDay } from '../../src/lib/streak';
 import { colors, spacing, typography } from '../../src/theme';
 
-type WeatherState =
-  | { kind: 'loading' }
-  | { kind: 'ready'; weather: LocalWeather }
-  | { kind: 'no-permission' }
-  | { kind: 'error' };
+type WeatherState = { kind: 'loading' } | { kind: 'ready'; weather: LocalWeather } | { kind: 'no-permission' } | { kind: 'error' };
 
 type PositionResult = { kind: 'granted'; coords: LatLng } | { kind: 'no-permission' } | { kind: 'error' };
 
@@ -47,6 +43,9 @@ export default function HomeScreen() {
   const [position, setPosition] = useState<PositionResult | null>(null);
   const [routes, setRoutes] = useState<RecommendedRoute[] | null>(null);
   const [routeFilter, setRouteFilter] = useState<RouteFilter>('all');
+  // The top bar stays fixed while the page scrolls under it (glass, like
+  // session detail); the dashboard starts with a spacer of the same height.
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   // A2: onboarding is shown once per install, gated here since Home is
   // this app's actual entry point (no separate root index route — see
@@ -99,7 +98,7 @@ export default function HomeScreen() {
       return () => {
         cancelled = true;
       };
-    }, [checked])
+    }, [checked]),
   );
 
   if (!checked) return null;
@@ -111,74 +110,82 @@ export default function HomeScreen() {
   const nearbyRoutes = routes && position?.kind === 'granted' ? pickRecommendedRoutes(routes, position.coords, routeFilter) : null;
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={{ paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.dashboard}>
-        <DashboardGlow />
-        <TopBar depth={1} title="Home" avatarSource={avatarUrl ? { uri: avatarUrl } : undefined} style={styles.topBar} />
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }}
+        scrollIndicatorInsets={{ top: headerHeight }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.dashboard}>
+          <DashboardGlow />
+          <View style={{ height: headerHeight }} />
 
-        <View style={styles.dashboardContent}>
-          <Text style={[textStyle(typography.titles.medium), styles.sectionTitle]}>Dashboard</Text>
+          <View style={styles.dashboardContent}>
+            <Text style={[textStyle(typography.titles.medium), styles.sectionTitle]}>Dashboard</Text>
 
-          <View style={styles.cardRow}>
-            <GlassCard style={styles.weatherCard}>
-              <WeatherCardBody state={weather} />
-            </GlassCard>
+            <View style={styles.cardRow}>
+              <GlassCard style={styles.weatherCard}>
+                <WeatherCardBody state={weather} />
+              </GlassCard>
 
-            <GlassCard style={styles.streakCard}>
-              <View style={styles.cardTitle}>
-                <Text style={[textStyle(typography.body.extraSmall), styles.titleText]}>Streaks</Text>
-                <Text style={[textStyle(typography.titles.medium), styles.titleText]}>
-                  {streak === null ? '–' : formatStreakDays(streak)}
-                </Text>
-              </View>
-              {/* B3 [Proposed]: coloured when the streak is alive, grey at 0 */}
-              <FlameIcon color={streak ? colors.red['400'] : colors.greyScale['500']} />
-            </GlassCard>
-          </View>
-
-          <GlassCard style={styles.weekCard}>
-            <Text style={[textStyle(typography.body.extraSmall), styles.bodyText]}>This Week</Text>
-            <View style={styles.weekRow}>
-              {WEEKDAY_LETTERS.map((letter, i) => (
-                <View key={i} style={styles.weekDay}>
-                  <Text style={[textStyle(typography.body.extraSmall), styles.bodyText]}>{letter}</Text>
-                  <DayCircle day={week?.[i]} />
+              <GlassCard style={styles.streakCard}>
+                <View style={styles.cardTitle}>
+                  <Text style={[textStyle(typography.body.extraSmall), styles.titleText]}>Streaks</Text>
+                  <Text style={[textStyle(typography.titles.medium), styles.titleText]}>
+                    {streak === null ? '–' : formatStreakDays(streak)}
+                  </Text>
                 </View>
-              ))}
+                {/* B3 [Proposed]: coloured when the streak is alive, grey at 0 */}
+                <FlameIcon color={streak ? colors.red['400'] : colors.greyScale['500']} />
+              </GlassCard>
             </View>
-          </GlassCard>
-        </View>
-      </View>
 
-      {/* B5 [Proposed]: hidden without location permission (nothing to sort by). */}
-      {nearbyRoutes && (
-        <View style={styles.routesSection}>
-          <Text style={[textStyle(typography.titles.medium), styles.titleText]}>Recommended Routes</Text>
-          <View style={styles.chips}>
-            {ROUTE_FILTERS.map(({ key, label }) => (
-              <Chip key={key} label={label} size="small" selected={routeFilter === key} onPress={() => setRouteFilter(key)} />
-            ))}
-          </View>
-          {nearbyRoutes.length === 0 ? (
-            <Text style={[textStyle(typography.body.small), styles.subtitleText]}>No routes nearby</Text>
-          ) : (
-            <>
-              <View style={styles.routeGrid}>
-                {nearbyRoutes.map((route) => (
-                  <RouteCard key={route.id} route={route} style={styles.routeCard} />
+            <GlassCard style={styles.weekCard}>
+              <Text style={[textStyle(typography.body.extraSmall), styles.bodyText]}>This Week</Text>
+              <View style={styles.weekRow}>
+                {WEEKDAY_LETTERS.map((letter, i) => (
+                  <View key={i} style={styles.weekDay}>
+                    <Text style={[textStyle(typography.body.extraSmall), styles.bodyText]}>{letter}</Text>
+                    <DayCircle day={week?.[i]} />
+                  </View>
                 ))}
               </View>
-              {/* Required by the OSM data licence (ODbL) — routes come from OpenStreetMap. */}
-              <Text style={[textStyle(typography.caption), styles.subtitleText]}>Route data © OpenStreetMap contributors</Text>
-            </>
-          )}
+            </GlassCard>
+          </View>
         </View>
-      )}
-    </ScrollView>
+
+        {/* B5 [Proposed]: hidden without location permission (nothing to sort by). */}
+        {nearbyRoutes && (
+          <View style={styles.routesSection}>
+            <Text style={[textStyle(typography.titles.medium), styles.titleText]}>Recommended Routes</Text>
+            <View style={styles.chips}>
+              {ROUTE_FILTERS.map(({ key, label }) => (
+                <Chip key={key} label={label} size="small" selected={routeFilter === key} onPress={() => setRouteFilter(key)} />
+              ))}
+            </View>
+            {nearbyRoutes.length === 0 ? (
+              <Text style={[textStyle(typography.body.small), styles.subtitleText]}>No routes nearby</Text>
+            ) : (
+              <>
+                <View style={styles.routeGrid}>
+                  {nearbyRoutes.map((route) => (
+                    <RouteCard key={route.id} route={route} style={styles.routeCard} />
+                  ))}
+                </View>
+                {/* Required by the OSM data licence (ODbL) — routes come from OpenStreetMap. */}
+                <Text style={[textStyle(typography.caption), styles.subtitleText]}>Route data © OpenStreetMap contributors</Text>
+              </>
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      <View style={styles.header} onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}>
+        <GlassSurface style={StyleSheet.absoluteFill} />
+        <TopBar depth={1} title="Home" avatarSource={avatarUrl ? { uri: avatarUrl } : undefined} style={styles.topBar} />
+      </View>
+    </View>
   );
 }
 
@@ -192,8 +199,7 @@ async function loadPosition(): Promise<PositionResult> {
     if (permission.status !== 'granted') return { kind: 'no-permission' };
 
     const position =
-      (await Location.getLastKnownPositionAsync()) ??
-      (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+      (await Location.getLastKnownPositionAsync()) ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
     return { kind: 'granted', coords: { lat: position.coords.latitude, lng: position.coords.longitude } };
   } catch (e) {
     // e.g. a fresh iOS Simulator with no location set (see README)
@@ -262,9 +268,7 @@ function DayCircle({ day }: { day: WeekDay | undefined }) {
   const isToday = day.status === 'today';
   return (
     <View style={[styles.dayCircle, isToday ? styles.dayToday : styles.dayFuture]}>
-      <Text style={[textStyle(typography.body.extraSmall), isToday ? styles.bodyText : styles.subtitleText]}>
-        {day.dayOfMonth}
-      </Text>
+      <Text style={[textStyle(typography.body.extraSmall), isToday ? styles.bodyText : styles.subtitleText]}>{day.dayOfMonth}</Text>
     </View>
   );
 }
@@ -315,6 +319,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.base.white,
   },
+  scroll: {
+    flex: 1,
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
   dashboard: {
     // Figma uses #E7FFAC, which isn't in tokens.json yet — nearest token
     // until it's added in Tokens Studio.
@@ -328,7 +341,7 @@ const styles = StyleSheet.create({
   },
   dashboardContent: {
     paddingHorizontal: spacing['2xl'],
-    paddingTop: spacing.s,
+    paddingTop: spacing['2xl'],
     paddingBottom: spacing.xl,
     gap: spacing.m,
   },

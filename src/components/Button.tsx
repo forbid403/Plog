@@ -1,5 +1,5 @@
-import { BlurView } from 'expo-blur';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, Text, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import GlassSurface from './GlassSurface';
 import { colors, shadows, spacing, typography } from '../theme';
 import { shadowLayerToStyle } from '../lib/shadow';
 
@@ -12,6 +12,8 @@ export type ButtonProps = {
   size?: ButtonSize;
   variant?: ButtonVariant;
   disabled?: boolean;
+  /** Overrides the variant's label/icon colour (pass a colour token). */
+  labelColor?: string;
   onPress?: () => void;
   leadIcon?: (props: ButtonRenderIconProps) => React.ReactNode;
   tailIcon?: (props: ButtonRenderIconProps) => React.ReactNode;
@@ -33,8 +35,22 @@ const SIZES: Record<
 > = {
   small: { height: 36, paddingHorizontal: spacing.l, paddingVertical: spacing.s, iconSize: 18, typo: typography.body.extraSmall },
   medium: { height: 44, paddingHorizontal: spacing.xl, paddingVertical: 10, iconSize: 22, typo: typography.label.default },
-  large: { height: 52, paddingHorizontal: spacing['2xl'], paddingVertical: spacing.m, iconSize: 28, typo: typography.label.large, width: 200 },
-  full: { height: 58, paddingHorizontal: spacing['2xl'], paddingVertical: 18, iconSize: 30, typo: typography.label.large, width: 'stretch' },
+  large: {
+    height: 52,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.m,
+    iconSize: 28,
+    typo: typography.label.large,
+    width: 200,
+  },
+  full: {
+    height: 58,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: 18,
+    iconSize: 30,
+    typo: typography.label.large,
+    width: 'stretch',
+  },
 };
 
 // Figma's Glass_Button drop-shadow isn't tokenized (see BottomNavigation/known
@@ -61,9 +77,20 @@ function resolveColors(variant: ButtonVariant, disabled: boolean) {
 }
 
 /** Pill button (Figma: Plog Design System, node 106:588 "Button/Default"). */
-export default function Button({ label, size = 'medium', variant = 'fill', disabled = false, onPress, leadIcon, tailIcon, style }: ButtonProps) {
+export default function Button({
+  label,
+  size = 'medium',
+  variant = 'fill',
+  disabled = false,
+  labelColor,
+  onPress,
+  leadIcon,
+  tailIcon,
+  style,
+}: ButtonProps) {
   const dims = SIZES[size];
-  const palette = resolveColors(variant, disabled);
+  const resolved = resolveColors(variant, disabled);
+  const palette = labelColor ? { ...resolved, content: labelColor } : resolved;
 
   const content = (
     <>
@@ -95,9 +122,9 @@ export default function Button({ label, size = 'medium', variant = 'fill', disab
     // Label/icons are direct Pressable children (normal flow) so sizes
     // without an explicit width (small, medium) still size to content —
     // an absoluteFill wrapper around them doesn't contribute to intrinsic
-    // size and silently collapsed the pill. BlurView + tint stay as
-    // absoluteFill backdrop layers, same shape BottomNavigation's glass
-    // bar uses.
+    // size and silently collapsed the pill. GlassSurface (Liquid Glass on
+    // iOS 26+, blur + white tint otherwise) is an absoluteFill backdrop
+    // layer, same shape BottomNavigation's glass bar uses.
     return (
       <Pressable
         onPress={onPress}
@@ -106,8 +133,7 @@ export default function Button({ label, size = 'medium', variant = 'fill', disab
         accessibilityState={{ disabled }}
         style={[styles.glassShadowWrapper, styles.content, glassShadowStyle, sizeStyle, disabled && styles.disabledOpacity, style]}
       >
-        <BlurView intensity={20} tint="light" style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: palette.background }]} />
+        <GlassSurface style={StyleSheet.absoluteFill} />
         {content}
       </Pressable>
     );

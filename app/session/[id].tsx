@@ -274,7 +274,9 @@ export default function SessionDetailScreen() {
             {busy === 'saving' ? (
               <ActivityIndicator color={colors.greyScale['600']} style={styles.saving} />
             ) : (
-              <Button label="Save" size="full" variant="glass" disabled={!canSave} onPress={save} />
+              // Not `disabled`: the dimmed glass label was hard to read. Save
+              // with nothing changed is a no-op (save() checks canSave).
+              <Button label="Save" size="full" variant="glass" labelColor={colors.greyScale['800']} onPress={save} />
             )}
             <Pressable onPress={confirmDelete} disabled={busy !== null} accessibilityRole="button" hitSlop={spacing.s}>
               {busy === 'deleting' ? (
