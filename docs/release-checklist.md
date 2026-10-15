@@ -1,7 +1,13 @@
-# Release checklist — App Store / Google Play
+# Release checklist — App Store (iOS only this release)
 
 Written 2026-10-11 from the repo's state at the time. Re-check the "Blockers
 found in this repo" table before relying on it — items may have been fixed.
+
+**Scope decision (2026-10-15): Google Play is excluded from this MVP
+release.** Apple Developer Program enrollment is already underway; Play
+Console is not being purchased this round. Play-specific sections are kept
+below (not deleted) as reference for when Play support is added later, but
+nothing in them blocks this release.
 
 ## Blockers found in this repo
 
@@ -9,23 +15,24 @@ found in this repo" table before relying on it — items may have been fixed.
 |---|---|---|
 | 1 | **App icon is the Expo default** | `assets/icon.png` is the Expo template image; Android adaptive icon background `#E6F4FE` is the template default too |
 | 2 | ~~No account deletion~~ | Fixed: `delete_my_account()` (security-definer Postgres function, deletes auth.users -> cascades profiles/sessions/user_badges) + storage file cleanup (the original storage_buckets migration had never added delete policies at all, fixed alongside this), wired via `deleteAccount()` in `src/api/auth.ts`, bare UI on the My tab placeholder. Verified end-to-end against local dev and the hosted project |
-| 3 | **No Android Google Maps key** | Wired (2026-10-11): `app.config.ts` reads `GOOGLE_MAPS_ANDROID_API_KEY` — the key itself still needs issuing and setting in `.env` / EAS env vars |
+| 3 | ~~No Android Google Maps key~~ | N/A this release — Android excluded (2026-10-15). Wiring (`app.config.ts` reads `GOOGLE_MAPS_ANDROID_API_KEY`) stays in place unused, for whenever Android is picked back up |
 | 4 | ~~No Android package name~~ | Fixed: `com.soniabbb.plog` (hyphens aren't allowed; iOS stays `com.sonia-bbb.plog`) |
 | 5 | ~~EAS config~~ | Fixed: `eas init` run (`@sonia_bbb/plog`, project ID in `app.json`) |
 | 6 | ~~Backend is local-only~~ | Fixed: hosted project linked (`nqkjnhkbckodyjhlgzul`), migrations + seed pushed, anonymous sign-in enabled (was off by default on the hosted project — `supabase config push`), RLS + storage policies verified (cross-user read/write/upload all blocked, own-user operations all succeed) |
 | 7 | ~~iPad support on~~ | Fixed: `supportsTablet: false` |
 | 8 | ~~Photo location leak risk~~ | Fixed: every upload (litter photo, avatar) is re-encoded first (`src/lib/photo-upload.ts`), which strips EXIF |
-| 9 | **Android never run** | Open in `docs/todo-plog-session.md` (C3.1); background location not tested on a real device either |
+| 9 | ~~Android never run~~ | N/A this release — Android excluded (2026-10-15) |
 | 10 | **Unfinished features** | Copy Link and Instagram Story are hidden on the Impact card share sheet. Still open: Session detail (F), save-failure retry |
 
 ## 1. Accounts and prerequisites
 
-- [ ] Apple Developer Program (US$99/yr)
-- [ ] Google Play Console (US$25 one-off)
-- [ ] ⚠️ New **personal** Play accounts must run a **closed test with 12+ testers for 14 days** before production — start this early
-- [ ] Google Maps API key for Android (restrict to package name + SHA-1)
+- [x] Apple Developer Program (US$99/yr) — enrolled 2026-10-14, Individual,
+      dedicated project Apple ID (separate from personal). Awaiting approval
+- [ ] ~~Google Play Console~~ — excluded from this release (2026-10-15)
+- [ ] ~~Google Maps API key for Android~~ — excluded this release (Android
+      not shipping), `GOOGLE_MAPS_ANDROID_API_KEY` wiring can stay unused
 - [ ] Meta App ID (if keeping Instagram Story sharing)
-- [ ] Privacy policy URL and Support URL (both stores require them)
+- [ ] Privacy policy URL and Support URL (App Store requires both)
 - [ ] **Domain — not needed to ship the app itself.** App Store/Play
       Store don't require one; `*.supabase.co` is fine for the backend
       permanently (a custom API domain is an optional paid Supabase add-on,
@@ -58,8 +65,13 @@ found in this repo" table before relying on it — items may have been fixed.
 - [x] Decide `supportsTablet` (blocker #7) — `false`
 - [x] Permission strings: camera / photo library set via the `expo-image-picker` plugin; microphone permission disabled (unused)
 - [x] Android photo permissions: `expo-media-library` added `READ_MEDIA_IMAGES/VIDEO/AUDIO` by default (Play policy risk) — removed via `granularPermissions: []`; photo picking uses the system picker, Download only writes
-- [ ] Verify Impact card **Download** still works on Android 13+ without those read permissions (real device / emulator)
-- [ ] Confirm the build meets Play's required targetSdk (API level)
+- [ ] ~~Verify Impact card Download on Android 13+~~ — excluded this
+      release; code already reviewed as logically correct (see
+      `docs/pre-wednesday-checklist.md`), real-device check deferred with
+      the rest of Android
+- [x] ~~Confirm targetSdk~~ — N/A this release (iOS only), but confirmed
+      `36` via `expo prebuild --platform android` anyway, for whenever
+      Android is picked back up
 
 ## 4. Background location (biggest review risk — mostly defused)
 
@@ -77,9 +89,8 @@ longer does.
 - [x] Confirmed `isAndroidBackgroundLocationEnabled: false`, no
       `locationAlwaysAndWhenInUsePermission` in `app.json` — only
       `locationWhenInUsePermission` is requested
-- [ ] **Google**: still needs the foreground service type (location)
-      declaration in Play Console — lighter than the full background
-      location policy, no demo video needed
+- [ ] ~~Google: foreground service type declaration~~ — excluded this
+      release (no Play Console)
 - [ ] **Apple**: review notes explaining the foreground-service-equivalent
       (background mode) approach and how to test it — no "Always" request
       to explain since the app never asks for it
@@ -91,9 +102,9 @@ longer does.
 
 ## 5. Feature completeness and QA
 
-- [ ] Lock MVP scope: finish or hide unfinished features (blocker #10) — Copy Link / Instagram Story hidden
-- [ ] Real devices (1+ iOS, 1+ Android): record → pause → finish → Litter log → Impact card → share; force-quit recovery; offline behaviour
-- [ ] First full Android run (blocker #9)
+- [x] Lock MVP scope: finish or hide unfinished features (blocker #10) — Copy Link / Instagram Story confirmed hidden
+- [ ] Real device (1+ iOS): record → pause → finish → Litter log → Impact card → share; force-quit recovery; offline behaviour
+- [ ] ~~First full Android run~~ — excluded this release
 - [ ] Boundary cases: minimum session, 0 L session, permission denied (CLAUDE.md testing list)
 - [ ] Decide on crash reporting (e.g. Sentry) — optional, useful after first release
 - [ ] Clean up dev `console.log` / `console.error` and debug copy
@@ -108,7 +119,10 @@ longer does.
 - [ ] Review notes: anonymous sign-in, so no demo account needed; how to test background location
 - [ ] TestFlight internal → external (needs beta review) → submit
 
-## 7. Google Play Console
+## 7. Google Play Console — excluded from this release (2026-10-15)
+
+Kept as reference for when Android/Play support is picked up later; none of
+this blocks the iOS release.
 
 - [ ] Create app, use Play App Signing (EAS manages the upload key)
 - [ ] **Data safety form**: location, photos, user ID — plus a data deletion URL
@@ -123,10 +137,12 @@ longer does.
 - [ ] EAS Update for JS-only fixes (spec 0.5 [Proposed])
 - [ ] Monitor crashes and reviews
 
-## Suggested order
+## Suggested order (iOS only)
 
-1. Sign up for both stores and start the 14-day closed test clock — it's the longest lead time
-2. Fix blockers #1–6 and #8
-3. Android real-device testing
-4. Store listings
-5. Background location video + declarations
+1. ~~Sign up for both stores and start the 14-day closed test clock~~ —
+   N/A, Play excluded. Apple enrollment already in progress (2026-10-14)
+2. Fix remaining blockers (#1 icon, #3 Meta App ID if keeping Instagram
+   Story) — #9/#10 Android ones no longer apply this release
+3. Real iOS device testing
+4. App Store Connect listing (section 6)
+5. Apple review notes for background location (section 4)
