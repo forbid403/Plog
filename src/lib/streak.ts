@@ -72,3 +72,19 @@ export function computeThisWeek(sessions: SessionDay[], todayKey: string, device
     return { dateKey, dayOfMonth: Number(dateKey.slice(8, 10)), status };
   });
 }
+
+/**
+ * G5.4 streak badges: the longest run of consecutive plogging days ever,
+ * each session's day in its own time zone. Badges are permanent, so the
+ * best-ever run (not today's) decides whether a streak badge is earned.
+ */
+export function computeLongestStreak(sessions: SessionDay[]): number {
+  const days = [...new Set(sessions.map((s) => localDateKey(s.startedAt, s.timezone)))].sort();
+  let longest = 0;
+  let run = 0;
+  for (let i = 0; i < days.length; i++) {
+    run = i > 0 && addDays(days[i - 1], 1) === days[i] ? run + 1 : 1;
+    longest = Math.max(longest, run);
+  }
+  return longest;
+}

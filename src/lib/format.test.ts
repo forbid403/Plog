@@ -1,8 +1,10 @@
 import {
+  formatDetailDate,
   formatDistanceKm,
   formatDuration,
   formatElevationM,
   formatImpactCardDate,
+  formatListDate,
   formatLiters,
   formatPace,
   formatPrecipitationMm,
@@ -83,4 +85,24 @@ describe('formatRouteDistanceKm', () => {
 
 describe('formatElevationM', () => {
   it('rounds to whole metres', () => expect(formatElevationM(66.6)).toBe('67m'));
+});
+
+describe('formatListDate', () => {
+  it('formats DD/MM/YY in the session time zone', () => {
+    // 2026-01-23T14:00Z is 24 Jan 01:00 in Sydney
+    expect(formatListDate('2026-01-23T14:00:00Z', 'Australia/Sydney')).toBe('24/01/26');
+  });
+});
+
+describe('formatDetailDate', () => {
+  it('adds the ordinal suffix', () => {
+    expect(formatDetailDate('2026-08-24T02:00:00Z', 'Australia/Sydney')).toBe('24th Aug 2026');
+    expect(formatDetailDate('2026-08-01T02:00:00Z', 'Australia/Sydney')).toBe('1st Aug 2026');
+    expect(formatDetailDate('2026-08-22T02:00:00Z', 'Australia/Sydney')).toBe('22nd Aug 2026');
+    expect(formatDetailDate('2026-08-23T02:00:00Z', 'Australia/Sydney')).toBe('23rd Aug 2026');
+  });
+  it('uses th for 11-13', () => {
+    expect(formatDetailDate('2026-08-11T02:00:00Z', 'Australia/Sydney')).toBe('11th Aug 2026');
+    expect(formatDetailDate('2026-08-13T02:00:00Z', 'Australia/Sydney')).toBe('13th Aug 2026');
+  });
 });

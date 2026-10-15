@@ -1,4 +1,5 @@
 import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
+import { StackActions } from 'expo-router/react-navigation';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomNavigation, { type BottomNavigationTab } from '../../src/components/BottomNavigation';
@@ -28,7 +29,17 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <BottomNavigation
       active={activeTab}
-      onChange={(tab) => navigation.navigate(TAB_TO_ROUTE[tab])}
+      onChange={(tab) => {
+        const routeName = TAB_TO_ROUTE[tab];
+        // A tab tap always lands on that tab's root screen, like a standard
+        // tab bar — e.g. My while on Your Impact goes back to My (the My
+        // tab is a nested stack, app/(tabs)/my/_layout.tsx).
+        const nested = state.routes.find((r) => r.name === routeName)?.state;
+        if (nested?.key && (nested.index ?? 0) > 0) {
+          navigation.dispatch({ ...StackActions.popToTop(), target: nested.key });
+        }
+        navigation.navigate(routeName);
+      }}
       style={[styles.tabBar, { bottom: insets.bottom + 16 }]}
     />
   );
