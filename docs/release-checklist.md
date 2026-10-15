@@ -91,9 +91,9 @@ longer does.
       `locationWhenInUsePermission` is requested
 - [ ] ~~Google: foreground service type declaration~~ — excluded this
       release (no Play Console)
-- [ ] **Apple**: review notes explaining the foreground-service-equivalent
-      (background mode) approach and how to test it — no "Always" request
-      to explain since the app never asks for it
+- [x] **Apple**: review notes explaining the background mode approach and
+      how to test it — drafted in `docs/store-listing-draft.md`'s "Review
+      notes" section
 - [ ] Test background-permission-denied behaviour on a real device (open in todo)
 - [ ] Re-verify recording actually survives the screen being off / app
       backgrounded on a **real device** with this while-in-use-only setup
@@ -116,7 +116,7 @@ longer does.
 - [ ] Age rating questionnaire
 - [ ] Screenshots: 6.9" iPhone required (+ iPad if supported)
 - [ ] Description, keywords, promotional text, Support URL, Privacy policy URL
-- [ ] Review notes: anonymous sign-in, so no demo account needed; how to test background location
+- [x] Review notes: anonymous sign-in, so no demo account needed; how to test background location — drafted in `docs/store-listing-draft.md`
 - [ ] TestFlight internal → external (needs beta review) → submit
 
 ## 7. Google Play Console — excluded from this release (2026-10-15)

@@ -71,7 +71,7 @@ first pass, not keyword-research-backed.)
 Not drafted here — these need real hosted pages (see
 `docs/pre-wednesday-checklist.md`), not just copy.
 
-## Review notes (both stores)
+## Review notes (App Store — iOS only this release)
 
 ```
 Plog uses anonymous sign-in — there is no email/password account, so no
@@ -79,16 +79,26 @@ demo login is needed. Tapping "Skip it for now" on the profile setup
 screen also works without entering a nickname.
 
 To test the core flow: open the Plog tab, tap Start, walk around (or use
-simulated location), tap the bottom sheet handle to expand/collapse it,
-tap Pause/Resume, then "Finish & Log litter" to see the litter-logging and
-Impact card screens.
+Simulator's Features > Location > City Run / a custom location), tap the
+bottom sheet handle to expand/collapse it, tap Pause/Resume, then "Finish
+& Log litter" to see the litter-logging and Impact card screens.
 
-Location: the app requests only "while in use" location permission, never
-"Always"/background location. Recording continues with the screen off via
-[iOS: a background mode / Android: a foreground service with a persistent
-notification] while an explicitly user-started session is in progress —
-this does not involve passive background tracking outside an active
-session.
+LOCATION PERMISSION AND BACKGROUND MODE
+Plog requests only "When In Use" location authorization. It never
+requests "Always" authorization and never declares
+NSLocationAlwaysAndWhenInUseUsageDescription — there is no persistent or
+passive background tracking.
+
+The app does declare the "Location updates" background mode
+(UIBackgroundModes: location) in Info.plist. This exists solely to keep
+recording the user's own plogging route when the screen locks or the user
+switches apps mid-session — exactly as Apple Maps or a running app would
+continue a turn-by-turn or workout session with the screen off. This mode
+is never active unless the user has explicitly tapped "Start" to begin a
+session; there is no background activity before a session starts or after
+it ends. To test: start a session, lock the device or background the app,
+wait ~30s, then return — the elapsed time and route will have kept
+recording.
 ```
 
 ## What's NOT ready for submission yet (don't list these as working features)
