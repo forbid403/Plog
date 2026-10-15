@@ -27,7 +27,7 @@ nothing in them blocks this release.
 ## 1. Accounts and prerequisites
 
 - [x] Apple Developer Program (US$99/yr) — enrolled 2026-10-14, Individual,
-      dedicated project Apple ID (separate from personal). Awaiting approval
+      dedicated project Apple ID (separate from personal). Approved 2026-10-15
 - [ ] ~~Google Play Console~~ — excluded from this release (2026-10-15)
 - [ ] ~~Google Maps API key for Android~~ — excluded this release (Android
       not shipping), `GOOGLE_MAPS_ANDROID_API_KEY` wiring can stay unused
