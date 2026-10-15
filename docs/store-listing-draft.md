@@ -43,6 +43,10 @@ Every session becomes a shareable Impact card: your route, your litres
 collected, your time and distance. Share it to Instagram, WhatsApp, or
 Telegram, or save it to your photos.
 
+BUILD A STREAK
+Keep plogging day after day and watch your streak grow on your Home
+screen — miss a day and it resets, so every plog counts.
+
 Plog is built for anyone who wants their regular run, jog, or walk to leave
 the world a little cleaner.
 ```
@@ -89,13 +93,17 @@ session.
 
 ## What's NOT ready for submission yet (don't list these as working features)
 
-- Public card web page / Copy Link sharing — not built (E4, deferred)
-- Instagram Story direct share — falls back to the generic share sheet
-  (no Meta App ID configured)
-- Session detail screen, My tab, Home tab — not built (placeholders)
+(Updated 2026-10-15 — Home, My tab, Your Impact and Session detail have
+since been built; only these two remain genuinely unbuilt/hidden.)
 
-Keep the description above scoped to what's actually shippable: recording,
-litter logging, Impact card (minus Copy Link), sharing via the system
-share sheet / WhatsApp / Telegram. Streaks exist in the data model (G5.4)
-but aren't displayed anywhere yet (Home/My aren't built) — don't claim
-them as a feature until there's a screen that shows one.
+- Public card web page / Copy Link sharing — not built (E4, deferred),
+  hidden on the Impact card share sheet
+- Instagram Story direct share — hidden on the share sheet (no Meta App
+  ID configured), falls back to the generic share sheet only if re-enabled
+
+Everything else in the description above is now shippable: recording,
+litter logging, Impact card sharing (system share sheet / WhatsApp /
+Telegram), Home with streak + weekly strip, My tab with session history
+and Your Impact, session detail. Streaks are now live on Home (current
+streak, flame icon colour reflects alive/at-0) and can be mentioned as a
+feature.
