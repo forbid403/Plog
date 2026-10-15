@@ -1,6 +1,6 @@
-import { BlurView } from 'expo-blur';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import GlassSurface, { LIQUID_GLASS_AVAILABLE } from './GlassSurface';
 import IconButton from './IconButton';
 import HouseIcon from './icons/HouseIcon';
 import SneakerMoveIcon from './icons/SneakerMoveIcon';
@@ -30,7 +30,7 @@ const ROW_VERTICAL_PADDING = spacing.s; // 8 — matches styles.blur's paddingVe
 const TAB_HEIGHT = 50; // IconButton's fixed height
 
 // Absolute `left` per tab index — the selector sits inside the (unpadded,
-// 338px-wide) BlurView box, same basis Figma used for its own left/center/right.
+// 338px-wide) glass box, same basis Figma used for its own left/center/right.
 const TAB_LEFT_POSITIONS = [EDGE_OFFSET, (CONTAINER_WIDTH - SELECTOR_WIDTH) / 2, CONTAINER_WIDTH - SELECTOR_WIDTH - EDGE_OFFSET];
 
 // A fixed pixel top, not `top: '50%'` — the blur row has no explicit height
@@ -59,8 +59,8 @@ export default function BottomNavigation({ active, onChange, style }: BottomNavi
   }));
 
   return (
-    <View style={[styles.shadowWrapper, shadowStyle, style]}>
-      <BlurView intensity={20} tint="light" style={styles.blur}>
+    <View style={[styles.shadowWrapper, !LIQUID_GLASS_AVAILABLE && styles.fallbackTint, shadowStyle, style]}>
+      <GlassSurface style={styles.blur}>
         <Animated.View style={[styles.selector, animatedSelectorStyle]} />
         {TABS.map(({ key, label, Icon }) => (
           <IconButton
@@ -72,7 +72,7 @@ export default function BottomNavigation({ active, onChange, style }: BottomNavi
             style={styles.tab}
           />
         ))}
-      </BlurView>
+      </GlassSurface>
     </View>
   );
 }
@@ -81,6 +81,10 @@ const styles = StyleSheet.create({
   shadowWrapper: {
     width: CONTAINER_WIDTH,
     borderRadius: spacing.full,
+  },
+  // Blur fallback only (Android / iOS < 26): the tint the bar had before
+  // Liquid Glass. With Liquid Glass it would frost the glass.
+  fallbackTint: {
     backgroundColor: colors.opacity.white50,
   },
   blur: {

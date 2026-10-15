@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import GlassSurface, { LIQUID_GLASS_AVAILABLE } from './GlassSurface';
 import { colors, spacing } from '../theme';
 
 export type CircleIconButtonProps = {
@@ -19,8 +20,9 @@ export default function CircleIconButton({ icon, onPress, accessibilityLabel, st
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={[styles.button, style]}
+      style={[styles.button, !LIQUID_GLASS_AVAILABLE && styles.fallbackBorder, style]}
     >
+      <GlassSurface style={StyleSheet.absoluteFill} />
       {icon({ color: ICON_COLOR, size: ICON_SIZE })}
     </Pressable>
   );
@@ -31,10 +33,14 @@ const styles = StyleSheet.create({
     width: SIZE,
     height: SIZE,
     borderRadius: spacing.full,
-    borderWidth: 1,
-    borderColor: colors.opacity.grey8,
-    backgroundColor: colors.opacity.white50,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Liquid Glass draws its own edge; the hairline border is only for the
+  // blur fallback (Android / iOS < 26), as before.
+  fallbackBorder: {
+    borderWidth: 1,
+    borderColor: colors.opacity.grey8,
   },
 });
