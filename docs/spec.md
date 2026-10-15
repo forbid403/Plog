@@ -669,7 +669,7 @@ for i in 0..4:
 
 #### G4.4 Title generation rules [Confirmed]
 
-Auto-generated, **not editable by the user at this stage**. Format: `{Weekday} {Time of day} Run`
+Auto-generated when the session is created; **the user can rename it afterwards** from session detail (decided 2026-10-15). Format: `{Weekday} {Time of day} Run`
 
 | Session start time (local) | Time of day |
 | --- | --- |
@@ -680,7 +680,7 @@ Auto-generated, **not editable by the user at this stage**. Format: `{Weekday} {
 
 - Weekday and time of day use the session's stored `timezone`
 - Time ranges are [Proposed] and can be adjusted
-- The title is generated once by the server when the session is created and stored (it is a search target)
+- The title is generated once by the server when the session is created and stored (it is a search target); a rename replaces it and is never regenerated
 - Fix placeholder data in the design: 24/01/26 is a Saturday and 21/01/26 is a Wednesday
 
 #### G4.5 Full-screen map [Confirmed]
@@ -891,7 +891,7 @@ The tab bar is also shown on Your Impact detail, with `My` kept active.
 | Sort | Most recent / Oldest |
 | Sessions with no litter | Shown in feed |
 | Bag icon basis | Per-session bag size |
-| Session title | Auto-generated, not editable |
+| Session title | Auto-generated, user can rename |
 | Previous Plogs | Removed |
 | Plogged N days | Cumulative days in the year |
 | Chart range | Fixed 12 months |

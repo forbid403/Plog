@@ -48,12 +48,12 @@ Program 가입(완료, 2026-10-14) 이후 바로 App Store 제출 단계로 넘�
 
 - [ ] ~~안드로이드용 Google Maps API 키~~ — 제외 (2026-10-15), Android
       자체가 이번 릴리즈에서 빠짐
-- [ ] Meta App ID — Instagram Story 공유 기능 유지할 경우에만 필요, Facebook
-      Developer 계정도 무료
+- [ ] ~~Meta App ID~~ — 제외 (2026-10-15), Instagram Story 공유는 이번
+      릴리스에서 숨김 유지
 
 ## 콘텐츠/문구 (계정 불필요)
 
-- [ ] Privacy policy 페이지 (무료 호스팅 — Notion, GitHub Pages 등)
+- [x] Privacy policy 페이지 — Notion (2026-10-15): https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77
 - [ ] Support URL / 페이지
 - [x] App Store / Play 심사 노트 초안 — `docs/store-listing-draft.md`에 포함
 - [x] 스토어 리스팅 문구 초안 — `docs/store-listing-draft.md` (설명, 키워드,

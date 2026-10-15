@@ -22,7 +22,7 @@ nothing in them blocks this release.
 | 7 | ~~iPad support on~~ | Fixed: `supportsTablet: false` |
 | 8 | ~~Photo location leak risk~~ | Fixed: every upload (litter photo, avatar) is re-encoded first (`src/lib/photo-upload.ts`), which strips EXIF |
 | 9 | ~~Android never run~~ | N/A this release — Android excluded (2026-10-15) |
-| 10 | **Unfinished features** | Copy Link and Instagram Story are hidden on the Impact card share sheet. Still open: Session detail (F), save-failure retry |
+| 10 | **Unfinished features** | Copy Link and Instagram Story are hidden on the Impact card share sheet. Save-failure retry done (2026-10-15). Instagram Story excluded this release. Still open: Session detail (F) |
 
 ## 1. Accounts and prerequisites
 
@@ -31,8 +31,11 @@ nothing in them blocks this release.
 - [ ] ~~Google Play Console~~ — excluded from this release (2026-10-15)
 - [ ] ~~Google Maps API key for Android~~ — excluded this release (Android
       not shipping), `GOOGLE_MAPS_ANDROID_API_KEY` wiring can stay unused
-- [ ] Meta App ID (if keeping Instagram Story sharing)
-- [ ] Privacy policy URL and Support URL (App Store requires both)
+- [ ] ~~Meta App ID~~ — Instagram Story sharing excluded from this release
+      (2026-10-15), stays hidden
+- [ ] Privacy policy URL and Support URL (App Store requires both) —
+      Privacy policy drafted in Notion (2026-10-15): https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77 — confirm it's
+      published to the web (opens logged-out). Support URL still open
 - [ ] **Domain — not needed to ship the app itself.** App Store/Play
       Store don't require one; `*.supabase.co` is fine for the backend
       permanently (a custom API domain is an optional paid Supabase add-on,
@@ -50,7 +53,7 @@ nothing in them blocks this release.
 - [x] Production `EXPO_PUBLIC_SUPABASE_URL` / anon key as EAS environment variables (`preview` + `production`)
 - [x] Re-verify RLS on the production DB — verified directly: two separate anonymous users, cross-user session read/insert/profile-edit and cross-user storage upload all blocked (RLS policy violation), own-user reads/writes/uploads all succeed
 - [x] Anonymous sign-in was **disabled by default** on the hosted project (`config.toml`'s `enable_anonymous_sign_ins = true` only applies to local dev, not automatically to a hosted project) — fixed via `supabase config push`, confirmed working
-- [ ] Anonymous sign-in abuse protection (Supabase CAPTCHA / rate limits) — not addressed by the above, separate item
+- [x] Anonymous sign-in abuse protection (Supabase CAPTCHA / rate limits) — rate limit in place (`auth.rate_limit.anonymous_users = 30`/hour/IP in `config.toml`, should have gone up with the earlier `supabase config push` — not re-checked on the hosted dashboard); CAPTCHA deliberately skipped for MVP (2026-10-15) — add Turnstile/hCaptcha only if abuse actually shows up
 - [x] Account deletion: DB rows + storage files + auth user (blocker #2)
 - [x] Strip EXIF before upload — always re-encode the photo (blocker #8)
 
@@ -108,7 +111,9 @@ longer does.
 - [ ] ~~First full Android run~~ — excluded this release
 - [ ] Boundary cases: minimum session, 0 L session, permission denied (CLAUDE.md testing list)
 - [ ] Decide on crash reporting (e.g. Sentry) — optional, useful after first release
-- [ ] Clean up dev `console.log` / `console.error` and debug copy
+- [x] Clean up dev `console.log` / `console.error` and debug copy — checked
+      2026-10-15: no `console.log` or debug copy left; remaining
+      `console.error`/`console.warn` are all in catch blocks, kept on purpose
 
 ## 6. App Store Connect
 
@@ -142,8 +147,8 @@ this blocks the iOS release.
 
 1. ~~Sign up for both stores and start the 14-day closed test clock~~ —
    N/A, Play excluded. Apple enrollment already in progress (2026-10-14)
-2. Fix remaining blockers (#1 icon, #3 Meta App ID if keeping Instagram
-   Story) — #9/#10 Android ones no longer apply this release
+2. Fix remaining blockers (#1 icon; Meta App ID no longer needed —
+   Instagram Story excluded) — #9/#10 Android ones no longer apply this release
 3. Real iOS device testing
 4. App Store Connect listing (section 6)
 5. Apple review notes for background location (section 4)

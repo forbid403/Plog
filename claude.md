@@ -72,7 +72,7 @@ liters  = round(fillRatio * bagSizeLiters, 1)
 
 - **Formatting (G0.2, G3.2):** litres 1 decimal, dropped when whole (`15 L`, `37.5 L`); distance 1 decimal in lists and detail, 2 while recording and on cards (`4.00`); time `mm:ss` / `h:mm:ss`; pace `m′ss″`; singular/plural (`1 bin`, `1 day`).
 - **Time zone:** session dates, weekdays and streak days use the session's stored `timezone`, never the device's.
-- **Session title (G4.4):** auto-generated `{Weekday} {Morning|Afternoon|Evening|Late Night} Run`, generated server-side once, not user-editable.
+- **Session title (G4.4):** auto-generated `{Weekday} {Morning|Afternoon|Evening|Late Night} Run`, generated server-side once on insert; the user can rename it from session detail (the trigger is `BEFORE INSERT` only, so a rename sticks).
 - **Streaks (G5.4):** a missed day resets to 0; today stays alive until midnight; earned badges are permanent. Distance badges use cumulative distance.
 - **No auto-pause (C3):** users stop constantly to pick up litter. Time excludes manual pauses only.
 - **Minimum session (C4):** under 1 minute or under 0.1 km cannot be saved.

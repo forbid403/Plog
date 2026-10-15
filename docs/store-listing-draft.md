@@ -68,8 +68,8 @@ first pass, not keyword-research-backed.)
 
 ## Support URL / Privacy policy URL
 
-Not drafted here — these need real hosted pages (see
-`docs/pre-wednesday-checklist.md`), not just copy.
+- Privacy policy: https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77
+- Support URL: not yet (see `docs/pre-wednesday-checklist.md`)
 
 ## Review notes (App Store — iOS only this release)
 

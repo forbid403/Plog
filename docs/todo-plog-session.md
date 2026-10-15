@@ -194,11 +194,14 @@ noise thresholds):
       Verified against the local Supabase instance: all four time-of-day
       buckets, and a full createSession→updateLitter round-trip (RLS,
       trigger, and the update both confirmed working)
-- [ ] On network failure: keep locally, retry, don't block Litter log
-      [Proposed] — **not built**. `createSession` failing shows an Alert
-      and does NOT delete `plog_points` (so the route data isn't lost),
-      but there's no retry UI yet to act on that — a real gap, flagged in
-      `handleGuardFinish`'s catch block, not silently patched over
+- [x] On network failure: keep locally, retry [Proposed] — the payload
+      goes into `pending_session_saves` (`src/lib/pendingSessionSavesDb.ts`)
+      before the network call; a failure shows `Retry`, and Home retries
+      leftovers on every visit (`retryPendingSessionSaves`). The session id
+      is client-generated, so a retry after a lost response can't duplicate
+      the row (23505 → refetch). "Don't block Litter log" is **not** done:
+      Litter log still needs the server row, and a session saved later from
+      Home has no way to log litter (session detail has no litter entry)
 - [ ] `getSession(id)`, `getSessionRoute(id)` — not needed yet (F isn't
       built)
 
