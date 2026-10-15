@@ -15,6 +15,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 // in the background to deliver a location update.
 import '../src/lib/backgroundLocationTask';
 import { PlogSessionProvider } from '../src/hooks/usePlogSession';
+import { PENDING_SESSION_SAVES_SCHEMA } from '../src/lib/pendingSessionSavesDb';
 import { PLOG_POINTS_SCHEMA } from '../src/lib/plogPointsDb';
 import { PLOG_SESSION_SCHEMA } from '../src/lib/plogSessionDb';
 
@@ -39,7 +40,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.flex}>
       <SafeAreaProvider>
         {/* usePlogSession (C1) and the background location task (C3.1) both read/write this DB. */}
-        <SQLiteProvider databaseName="plog.db" onInit={(db) => db.execAsync(PLOG_SESSION_SCHEMA + PLOG_POINTS_SCHEMA)}>
+        <SQLiteProvider databaseName="plog.db" onInit={(db) => db.execAsync(PLOG_SESSION_SCHEMA + PLOG_POINTS_SCHEMA + PENDING_SESSION_SAVES_SCHEMA)}>
           {/* Shared status — the Plog tab and (tabs)/_layout.tsx's tab bar
               both need to see the same live session state, not their own
               independent copies. Inside SQLiteProvider: depends on it. */}

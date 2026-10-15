@@ -1,4 +1,6 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
 import { supabase } from './supabase';
+import { deletePendingSessionSave, getPendingSessionSaves } from '../lib/pendingSessionSavesDb';
 import { prepareUploadJpeg } from '../lib/photo-upload';
 
 export type RoutePoint = {
@@ -9,6 +11,8 @@ export type RoutePoint = {
 };
 
 export type CreateSessionPayload = {
+  /** Client-generated (usePlogSession's local id) so a retried save can't create a duplicate row. */
+  id: string;
   startedAt: string;
   endedAt: string;
   timezone: string;
@@ -85,6 +89,7 @@ export async function createSession(payload: CreateSessionPayload): Promise<Sess
   const { data, error } = await supabase
     .from('sessions')
     .insert({
+      id: payload.id,
       user_id: userId,
       started_at: payload.startedAt,
       ended_at: payload.endedAt,
@@ -99,8 +104,22 @@ export async function createSession(payload: CreateSessionPayload): Promise<Sess
     })
     .select('id, title')
     .single();
+  // Unique violation: an earlier attempt landed but its response was lost — the row is already there.
+  if (error?.code === '23505') {
+    const existing = await supabase.from('sessions').select('id, title').eq('id', payload.id).single();
+    if (existing.error) throw existing.error;
+    return existing.data;
+  }
   if (error) throw error;
   return data;
+}
+
+/** C6 retry: re-sends saves that failed earlier (kept locally by queuePendingSessionSave). Stops at the first failure. */
+export async function retryPendingSessionSaves(db: SQLiteDatabase): Promise<void> {
+  for (const payload of await getPendingSessionSaves(db)) {
+    await createSession(payload);
+    await deletePendingSessionSave(db, payload.id);
+  }
 }
 
 /** E (Impact card) / F (session detail): fetches one session, owner-only (RLS). */

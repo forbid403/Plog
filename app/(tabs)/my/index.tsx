@@ -12,6 +12,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { deleteAccount, getMyProfile, listMySessions, type MySession } from '../../../src/api';
 import {
@@ -26,6 +27,7 @@ import {
   type DropdownAnchor,
 } from '../../../src/components';
 import { formatLiters } from '../../../src/lib/format';
+import { clearPendingSessionSaves } from '../../../src/lib/pendingSessionSavesDb';
 import { computeImpact, formatBins, formatBottles } from '../../../src/lib/impact';
 import { SESSION_SORT_OPTIONS, sortSessions, type SessionSort } from '../../../src/lib/session-sort';
 import { colors, shadows, spacing, typography } from '../../../src/theme';
@@ -40,6 +42,7 @@ const IMPACT_ICON_SIZE = 36;
 /** My tab root (spec G1–G4, G8; Figma: Plog Design, node 690:1861). */
 export default function MyScreen() {
   const router = useRouter();
+  const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sessions, setSessions] = useState<MySession[] | null>(null);
@@ -106,6 +109,7 @@ export default function MyScreen() {
     setDeleting(true);
     try {
       await deleteAccount();
+      await clearPendingSessionSaves(db);
       router.replace('/onboarding-profile');
     } catch (e) {
       console.error('[my] account deletion failed:', e);

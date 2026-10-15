@@ -19,8 +19,9 @@ import { useCurrentLocation } from '../../src/hooks/useCurrentLocation';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { shadowLayerToStyle } from '../../src/lib/shadow';
 import { formatDistanceKm, formatDuration, formatPace } from '../../src/lib/format';
-import { createSession } from '../../src/api/sessions';
-import { deletePointsForSession, getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
+import { createSession, type CreateSessionPayload } from '../../src/api/sessions';
+import { deletePendingSessionSave, queuePendingSessionSave } from '../../src/lib/pendingSessionSavesDb';
+import { getPointsForSession, type PlogPointRow } from '../../src/lib/plogPointsDb';
 import { computeDistanceKm, splitActiveSegments, type RoutePoint } from '../../src/lib/plogSessionDistance';
 import { computeElevationGainM } from '../../src/lib/plogSessionElevation';
 import { computeAvgPaceSecPerKm } from '../../src/lib/plogSessionTime';
@@ -203,32 +204,36 @@ export default function PlogScreen() {
   const handleGuardFinish = async () => {
     finishSheetRef.current?.close();
     const summary = await finish();
+    // C6: creates the sessions row now (litter fields left null — D7's
+    // updateLitter fills those in from the Litter log screen).
+    const payload: CreateSessionPayload = {
+      id: summary.id,
+      startedAt: summary.startedAt,
+      endedAt: summary.endedAt,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      durationSec: summary.durationSec,
+      distanceKm,
+      elevationGainM: elevGainM,
+      avgPaceSecPerKm,
+      route: points.map((p) => ({ lat: p.lat, lng: p.lng, alt: p.alt, t: p.t })),
+    };
+    // Kept locally before the network call (C6 "keep locally and retry"):
+    // a failed save is retried from the alert below or on the next Home visit.
+    await queuePendingSessionSave(db, payload);
+    await saveSession(payload);
+  };
+
+  const saveSession = async (payload: CreateSessionPayload) => {
     try {
-      // C6: creates the sessions row now (litter fields left null — D7's
-      // updateLitter fills those in from the Litter log screen).
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const session = await createSession({
-        startedAt: summary.startedAt,
-        endedAt: summary.endedAt,
-        timezone,
-        durationSec: summary.durationSec,
-        distanceKm,
-        elevationGainM: elevGainM,
-        avgPaceSecPerKm,
-        route: points.map((p) => ({ lat: p.lat, lng: p.lng, alt: p.alt, t: p.t })),
-      });
-      // Only cleaned up on a successful save — see usePlogSession.finish()'s
-      // own comment: C6 reads plog_points and cleans them up, not finish().
-      await deletePointsForSession(db, summary.id);
+      const session = await createSession(payload);
+      await deletePendingSessionSave(db, payload.id);
       router.push({ pathname: '/litter-log', params: { sessionId: session.id } });
     } catch (e) {
-      // C6's own flagged gap: "On network failure: keep locally, retry,
-      // don't block Litter log" [Proposed] isn't built — this just surfaces
-      // the failure. plog_points are deliberately left in place (not
-      // deleted) so the route data isn't lost, but there's no retry UI yet
-      // to act on that.
       console.error('[plog] failed to save session:', e);
-      Alert.alert('Could not save your session', 'Check your connection and try again.');
+      Alert.alert('Could not save your session', 'Check your connection and try again.', [
+        { text: 'OK', style: 'cancel' },
+        { text: 'Retry', onPress: () => saveSession(payload) },
+      ]);
     }
   };
 

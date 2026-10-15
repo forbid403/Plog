@@ -49,11 +49,12 @@ export type UsePlogSessionResult = {
 };
 
 function localId(): string {
-  // Ephemeral local-only id (never sent to the server — C6 assigns the real
-  // session id), so a real UUID library isn't needed for this.
+  // UUID-shaped: C6 sends it as the sessions row id, so a retried save is
+  // idempotent (see createSession). Postgres' uuid type accepts any 32 hex
+  // digits, so a real UUID library isn't needed for this.
   let id = '';
   for (let i = 0; i < 32; i++) id += Math.floor(Math.random() * 16).toString(16);
-  return id;
+  return id.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
 }
 
 /** The actual implementation — only ever instantiated once, by PlogSessionProvider below. */

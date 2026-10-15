@@ -8,6 +8,7 @@ export {
   getSessionDetail,
   listMySessions,
   listSessionStarts,
+  retryPendingSessionSaves,
   saveSessionEdits,
   updateLitter,
 } from './sessions';

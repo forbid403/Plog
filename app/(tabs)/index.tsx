@@ -3,8 +3,9 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, Vi
 import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getLocalWeather, getMyProfile, listRoutes, listSessionStarts, type LocalWeather, type SessionStart } from '../../src/api';
+import { getLocalWeather, getMyProfile, listRoutes, listSessionStarts, retryPendingSessionSaves, type LocalWeather, type SessionStart } from '../../src/api';
 import { Chip, DashboardGlow, FlameIcon, GlassSurface, RouteCard, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { formatPrecipitationMm, formatStreakDays, formatTemperatureC } from '../../src/lib/format';
@@ -34,6 +35,7 @@ const TAB_BAR_CLEARANCE = spacing.l + 66 + spacing['3xl'];
 /** Home (spec Part B; Figma: Plog Design, node 562:4408). */
 export default function HomeScreen() {
   const router = useRouter();
+  const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
   const { status, hydrated } = usePlogSession();
   const [checked, setChecked] = useState(false);
@@ -80,7 +82,10 @@ export default function HomeScreen() {
         .then((profile) => !cancelled && setAvatarUrl(profile?.avatarUrl ?? null))
         .catch((e) => console.error('[home] profile load failed:', e));
 
-      listSessionStarts()
+      // C6: a session whose save failed earlier is re-sent first, so it shows up in the streak.
+      retryPendingSessionSaves(db)
+        .catch((e) => console.error('[home] pending session save failed:', e))
+        .then(() => listSessionStarts())
         .then((rows) => !cancelled && setSessions(rows))
         .catch((e) => console.error('[home] sessions load failed:', e));
 
@@ -98,7 +103,7 @@ export default function HomeScreen() {
       return () => {
         cancelled = true;
       };
-    }, [checked]),
+    }, [db, checked]),
   );
 
   if (!checked) return null;
