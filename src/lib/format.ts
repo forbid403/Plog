@@ -75,3 +75,24 @@ export function formatRouteDistanceKm(km: number): string {
 export function formatElevationM(meters: number): string {
   return `${Math.round(meters)}m`;
 }
+
+/** Feed date (0.2): `DD/MM/YY` in the session's own time zone. */
+export function formatListDate(iso: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat('en-AU', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: timezone }).formatToParts(
+    new Date(iso)
+  );
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('day')}/${get('month')}/${get('year')}`;
+}
+
+/** Session detail date (Figma 681:2580): `24th Aug 2026`, in the session's own time zone. */
+export function formatDetailDate(iso: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', year: 'numeric', timeZone: timezone }).formatToParts(
+    new Date(iso)
+  );
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? '';
+  const day = Number(get('day'));
+  const teen = day % 100 >= 11 && day % 100 <= 13;
+  const suffix = teen ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[day % 10] ?? 'th';
+  return `${day}${suffix} ${get('month')} ${get('year')}`;
+}

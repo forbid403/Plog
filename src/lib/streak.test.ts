@@ -1,4 +1,4 @@
-import { addDays, computeCurrentStreak, computeThisWeek, localDateKey } from './streak';
+import { addDays, computeCurrentStreak, computeLongestStreak, computeThisWeek, localDateKey } from './streak';
 
 const SYD = 'Australia/Sydney';
 // Noon Sydney time (UTC+11 in October) on the given day.
@@ -78,5 +78,22 @@ describe('computeThisWeek', () => {
   it('ignores sessions from other weeks', () => {
     const week = computeThisWeek([at('2026-10-11'), at('2026-10-19')], today, SYD);
     expect(week.some((d) => d.status === 'plogged')).toBe(false);
+  });
+});
+
+describe('computeLongestStreak', () => {
+  it('is 0 with no sessions', () => expect(computeLongestStreak([])).toBe(0));
+
+  it('finds the longest run, not the latest', () => {
+    const sessions = [at('2026-01-01'), at('2026-01-02'), at('2026-01-03'), at('2026-01-10'), at('2026-01-11')];
+    expect(computeLongestStreak(sessions)).toBe(3);
+  });
+
+  it('counts a day with several sessions once', () => {
+    expect(computeLongestStreak([at('2026-01-01'), at('2026-01-01'), at('2026-01-02')])).toBe(2);
+  });
+
+  it('crosses month boundaries', () => {
+    expect(computeLongestStreak([at('2026-01-31'), at('2026-02-01')])).toBe(2);
   });
 });
