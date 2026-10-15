@@ -13,7 +13,7 @@ nothing in them blocks this release.
 
 | # | Issue | Evidence |
 |---|---|---|
-| 1 | **App icon is the Expo default** | `assets/icon.png` is the Expo template image; Android adaptive icon background `#E6F4FE` is the template default too |
+| 1 | ~~App icon is the Expo default~~ | Fixed (iOS): real 1024×1024 icon in `assets/icon.png` (alpha stripped), splash via `expo-splash-screen` plugin (green P on black). Android adaptive icon still the template — N/A this release (Android excluded 2026-10-15) |
 | 2 | ~~No account deletion~~ | Fixed: `delete_my_account()` (security-definer Postgres function, deletes auth.users -> cascades profiles/sessions/user_badges) + storage file cleanup (the original storage_buckets migration had never added delete policies at all, fixed alongside this), wired via `deleteAccount()` in `src/api/auth.ts`, bare UI on the My tab placeholder. Verified end-to-end against local dev and the hosted project |
 | 3 | ~~No Android Google Maps key~~ | N/A this release — Android excluded (2026-10-15). Wiring (`app.config.ts` reads `GOOGLE_MAPS_ANDROID_API_KEY`) stays in place unused, for whenever Android is picked back up |
 | 4 | ~~No Android package name~~ | Fixed: `com.soniabbb.plog` (hyphens aren't allowed; iOS stays `com.sonia-bbb.plog`) |
@@ -61,7 +61,8 @@ nothing in them blocks this release.
 - [x] Set `android.package` — can't change after release
 - [x] `ios.config.usesNonExemptEncryption: false` (skips export compliance question)
 - [x] Versioning: EAS `autoIncrement` for build number / versionCode
-- [ ] Replace icon, adaptive icon and splash with real designs (blocker #1)
+- [x] Replace icon and splash with real designs (blocker #1) — Android
+      adaptive icon deferred with the rest of Android
 - [x] Decide `supportsTablet` (blocker #7) — `false`
 - [x] Permission strings: camera / photo library set via the `expo-image-picker` plugin; microphone permission disabled (unused)
 - [x] Android photo permissions: `expo-media-library` added `READ_MEDIA_IMAGES/VIDEO/AUDIO` by default (Play policy risk) — removed via `granularPermissions: []`; photo picking uses the system picker, Download only writes

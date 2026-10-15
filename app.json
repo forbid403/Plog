@@ -37,6 +37,15 @@
       "expo-secure-store",
       "expo-router",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#000000"
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Plog uses your location to record your plogging route.",
