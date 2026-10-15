@@ -33,9 +33,9 @@ nothing in them blocks this release.
       not shipping), `GOOGLE_MAPS_ANDROID_API_KEY` wiring can stay unused
 - [ ] ~~Meta App ID~~ — Instagram Story sharing excluded from this release
       (2026-10-15), stays hidden
-- [ ] Privacy policy URL and Support URL (App Store requires both) —
-      Privacy policy drafted in Notion (2026-10-15): https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77 — confirm it's
-      published to the web (opens logged-out). Support URL still open
+- [x] Privacy policy URL and Support URL (App Store requires both) —
+      done 2026-10-15. Privacy policy: https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77.
+      Support page done, URL not recorded here yet
 - [ ] **Domain — not needed to ship the app itself.** App Store/Play
       Store don't require one; `*.supabase.co` is fine for the backend
       permanently (a custom API domain is an optional paid Supabase add-on,

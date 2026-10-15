@@ -69,7 +69,7 @@ first pass, not keyword-research-backed.)
 ## Support URL / Privacy policy URL
 
 - Privacy policy: https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77
-- Support URL: not yet (see `docs/pre-wednesday-checklist.md`)
+- Support URL: done, URL not recorded here yet
 
 ## Review notes (App Store — iOS only this release)
 

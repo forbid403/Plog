@@ -54,7 +54,7 @@ Program 가입(완료, 2026-10-14) 이후 바로 App Store 제출 단계로 넘�
 ## 콘텐츠/문구 (계정 불필요)
 
 - [x] Privacy policy 페이지 — Notion (2026-10-15): https://app.notion.com/p/Plog-Privacy-Policy-3d4a16ed7abb80a19bb7d74a900adc77
-- [ ] Support URL / 페이지
+- [x] Support URL / 페이지 (2026-10-15, URL 미기록)
 - [x] App Store / Play 심사 노트 초안 — `docs/store-listing-draft.md`에 포함
 - [x] 스토어 리스팅 문구 초안 — `docs/store-listing-draft.md` (설명, 키워드,
       프로모션 텍스트, 심사 노트까지). 최종 제출 전에 검수 필요, 1차 초안임
