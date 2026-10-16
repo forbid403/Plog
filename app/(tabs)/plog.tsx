@@ -92,12 +92,18 @@ export default function PlogScreen() {
   const [following, setFollowing] = useState(true);
   const [points, setPoints] = useState<PlogPointRow[]>([]);
   const [expanded, setExpanded] = useState(false);
+  // The native map takes a moment to finish initializing after mount — if
+  // the first GPS fix lands before that, animateToRegion silently no-ops
+  // (there's no queueing), and if the device then doesn't move, no later
+  // `location` update ever arrives to retry it. Re-run once the map itself
+  // signals it's ready, using whatever location we already have by then.
+  const [mapReady, setMapReady] = useState(false);
 
   const recording = status !== 'idle';
   const paused = status === 'paused';
 
   useEffect(() => {
-    if (!location || !following) return;
+    if (!location || !following || !mapReady) return;
     // animateCamera({ center }) with no zoom/pitch/heading/altitude is a
     // known no-op on iOS's Apple Maps provider (it needs a full camera, not
     // a partial center-only update) — animateToRegion works on both
@@ -108,7 +114,7 @@ export default function PlogScreen() {
       latitudeDelta: FALLBACK_REGION.latitudeDelta,
       longitudeDelta: FALLBACK_REGION.longitudeDelta,
     });
-  }, [location, following]);
+  }, [location, following, mapReady]);
 
   // GPS points are only relevant once a session exists — polls plog_points
   // (written by the background task, C3.1) while recording/paused. No need
@@ -255,6 +261,7 @@ export default function PlogScreen() {
         zoomEnabled
         zoomTapEnabled
         onPanDrag={() => setFollowing(false)}
+        onMapReady={() => setMapReady(true)}
       >
         {recording &&
           splitActiveSegments(routePoints).map((segment, i) => (
