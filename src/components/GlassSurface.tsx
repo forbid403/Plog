@@ -20,9 +20,10 @@ export const LIQUID_GLASS_AVAILABLE = isLiquidGlassAvailable();
  */
 export default function GlassSurface({ style, children }: GlassSurfaceProps) {
   if (LIQUID_GLASS_AVAILABLE) {
-    // 'clear' = Apple's lighter, less frosted glass (product choice 2026-10-15).
+    // 'regular', not 'clear': 'clear' looked right in the Simulator but rendered
+    // as opaque dark grey on a real iPhone (TestFlight build 4, 2026-10-16).
     return (
-      <GlassView glassEffectStyle="clear" style={style}>
+      <GlassView glassEffectStyle="regular" style={style}>
         {children}
       </GlassView>
     );
