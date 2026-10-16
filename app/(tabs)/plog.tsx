@@ -98,8 +98,15 @@ export default function PlogScreen() {
 
   useEffect(() => {
     if (!location || !following) return;
-    mapRef.current?.animateCamera({
-      center: { latitude: location.coords.latitude, longitude: location.coords.longitude },
+    // animateCamera({ center }) with no zoom/pitch/heading/altitude is a
+    // known no-op on iOS's Apple Maps provider (it needs a full camera, not
+    // a partial center-only update) — animateToRegion works on both
+    // platforms with just a center + delta.
+    mapRef.current?.animateToRegion({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: FALLBACK_REGION.latitudeDelta,
+      longitudeDelta: FALLBACK_REGION.longitudeDelta,
     });
   }, [location, following]);
 
