@@ -1,0 +1,27 @@
+# Builds the iOS production app on EAS and submits it to TestFlight.
+# Manual trigger only (Actions tab → TestFlight → Run workflow): every run
+# uses an EAS build from the plan's quota.
+# Needs the EXPO_TOKEN repo secret (expo.dev → Account settings → Access tokens).
+# Apple credentials and the App Store Connect API key already live on EAS.
+name: TestFlight
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      # --no-wait: the job ends once the build is queued; progress and the
+      # TestFlight submission show up on expo.dev.
+      - run: eas build --platform ios --profile production --auto-submit --non-interactive --no-wait
