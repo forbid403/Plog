@@ -6,7 +6,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getLocalWeather, getMyProfile, listRoutes, listSessionStarts, retryPendingSessionSaves, type LocalWeather, type SessionStart } from '../../src/api';
-import { Chip, DashboardGlow, FlameIcon, GlassSurface, RouteCard, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
+import { Chip, DashboardGlow, FlameIcon, GlassSurface, RouteCard, RouteCardSkeleton, SneakerMoveIcon, TopBar, UmbrellaIcon } from '../../src/components';
 import { usePlogSession } from '../../src/hooks/usePlogSession';
 import { formatPrecipitationMm, formatStreakDays, formatTemperatureC } from '../../src/lib/format';
 import { hasCompletedOnboarding } from '../../src/lib/onboardingStorage';
@@ -17,6 +17,9 @@ import { colors, spacing, typography } from '../../src/theme';
 type WeatherState = { kind: 'loading' } | { kind: 'ready'; weather: LocalWeather } | { kind: 'no-permission' } | { kind: 'error' };
 
 type PositionResult = { kind: 'granted'; coords: LatLng } | { kind: 'no-permission' } | { kind: 'error' };
+
+// Two rows of the 2-column grid — enough to cover the section's first screenful.
+const ROUTE_SKELETON_COUNT = 4;
 
 // Figma chip labels (spec B5 calls them Turnaround / One way).
 const ROUTE_FILTERS: { key: RouteFilter; label: string }[] = [
@@ -44,6 +47,7 @@ export default function HomeScreen() {
   const [weather, setWeather] = useState<WeatherState>({ kind: 'loading' });
   const [position, setPosition] = useState<PositionResult | null>(null);
   const [routes, setRoutes] = useState<RecommendedRoute[] | null>(null);
+  const [routesFailed, setRoutesFailed] = useState(false);
   const [routeFilter, setRouteFilter] = useState<RouteFilter>('all');
   // The top bar stays fixed while the page scrolls under it (glass, like
   // session detail); the dashboard starts with a spacer of the same height.
@@ -90,8 +94,15 @@ export default function HomeScreen() {
         .catch((e) => console.error('[home] sessions load failed:', e));
 
       listRoutes()
-        .then((rows) => !cancelled && setRoutes(rows))
-        .catch((e) => console.error('[home] routes load failed:', e));
+        .then((rows) => {
+          if (cancelled) return;
+          setRoutes(rows);
+          setRoutesFailed(false);
+        })
+        .catch((e) => {
+          console.error('[home] routes load failed:', e);
+          if (!cancelled) setRoutesFailed(true);
+        });
 
       loadPosition().then(async (pos) => {
         if (cancelled) return;
@@ -113,6 +124,9 @@ export default function HomeScreen() {
   const streak = sessions ? computeCurrentStreak(sessions, todayKey) : null;
   const week = sessions ? computeThisWeek(sessions, todayKey, deviceTimeZone) : null;
   const nearbyRoutes = routes && position?.kind === 'granted' ? pickRecommendedRoutes(routes, position.coords, routeFilter) : null;
+  // Skeleton while location or routes are still loading; hidden (as before) once
+  // there's no permission, no location, or the routes request failed.
+  const routesLoading = !nearbyRoutes && !routesFailed && (position === null || position.kind === 'granted');
 
   return (
     <View style={styles.screen}>
@@ -161,7 +175,7 @@ export default function HomeScreen() {
         </View>
 
         {/* B5 [Proposed]: hidden without location permission (nothing to sort by). */}
-        {nearbyRoutes && (
+        {(nearbyRoutes || routesLoading) && (
           <View style={styles.routesSection}>
             <Text style={[textStyle(typography.titles.medium), styles.titleText]}>Recommended Routes</Text>
             <View style={styles.chips}>
@@ -169,7 +183,13 @@ export default function HomeScreen() {
                 <Chip key={key} label={label} size="small" selected={routeFilter === key} onPress={() => setRouteFilter(key)} />
               ))}
             </View>
-            {nearbyRoutes.length === 0 ? (
+            {!nearbyRoutes ? (
+              <View style={styles.routeGrid}>
+                {Array.from({ length: ROUTE_SKELETON_COUNT }, (_, i) => (
+                  <RouteCardSkeleton key={i} style={styles.routeCard} />
+                ))}
+              </View>
+            ) : nearbyRoutes.length === 0 ? (
               <Text style={[textStyle(typography.body.small), styles.subtitleText]}>No routes nearby</Text>
             ) : (
               <>

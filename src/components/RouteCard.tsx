@@ -67,6 +67,22 @@ export default function RouteCard({ route, style }: RouteCardProps) {
   );
 }
 
+/** Loading placeholder with RouteCard's exact footprint — same styles, blank text. */
+export function RouteCardSkeleton({ style }: { style?: StyleProp<ViewStyle> }) {
+  return (
+    <View style={[styles.card, styles.skeleton, style]}>
+      <View style={styles.map} />
+      <View style={styles.description}>
+        <Text style={styles.name}> </Text>
+        <View style={styles.stat}>
+          <Text style={styles.value}> </Text>
+          <Text style={styles.label}> </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     // Figma uses #EBFBC9, which isn't in tokens.json yet — nearest token
@@ -76,6 +92,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingBottom: spacing.m,
     gap: spacing.m,
+  },
+  skeleton: {
+    // Same placeholder grey as the My tab skeletons.
+    backgroundColor: colors.greyScale['100'],
   },
   map: {
     width: '100%',
