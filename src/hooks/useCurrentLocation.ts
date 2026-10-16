@@ -31,8 +31,12 @@ export function useCurrentLocation(): UseCurrentLocationResult {
       }
       setPermission('granted');
 
+      // distanceInterval 0, not 5: the user is standing still on the idle
+      // screen, and iOS drops fixes that haven't moved past the filter — so
+      // the first coarse fix (often 30–65m on a real device) never improves
+      // and `Finding GPS…` never clears. The simulator's fixed 5m fix hid this.
       subscription = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 },
+        { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 0 },
         (next) => {
           if (!cancelled) setLocation(next);
         }
